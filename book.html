@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Book a free consultation with DunnWell Therapy. Schedule online through Simple Practice or Google Calendar.">
+  <title>Book Consultation | DunnWell Therapy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <div class="announcement-bar" id="announcementBar">
+    Now accepting new families! <a href="book.html">Book your FREE consultation today</a>
+    <button class="close-bar" id="closeBar" aria-label="Close">&times;</button>
+  </div>
+
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="nav-logo"><img src="images/logo-full.png" alt="DunnWell Therapy"></a>
+      <div class="nav-links" id="navLinks">
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="services.html">Services</a>
+        <a href="blog.html">Blog</a>
+        <a href="contact.html">Contact</a>
+        <a href="book.html" class="btn btn-primary btn-sm active">Book Consultation</a>
+      </div>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><span></span><span></span><span></span></button>
+    </div>
+  </nav>
+
+  <section class="page-hero">
+    <div class="container">
+      <p class="section-label">Get Started</p>
+      <h1>Book a Consultation</h1>
+      <div class="divider"></div>
+      <p>Choose your preferred booking method below. Your first consultation is free.</p>
+    </div>
+  </section>
+
+  <!-- Booking -->
+  <section class="section-padding-lg">
+    <div class="container">
+      <div class="booking-tabs">
+        <button class="booking-tab active" data-tab="simple-practice"><i class="fas fa-calendar-alt"></i> Simple Practice</button>
+        <button class="booking-tab" data-tab="google-calendar"><i class="fab fa-google"></i> Google Calendar</button>
+        <button class="booking-tab" data-tab="manual-form"><i class="fas fa-pen-to-square"></i> Request Form</button>
+      </div>
+
+      <div class="alert alert-success" id="booking-success"><i class="fas fa-check-circle"></i><span>Your booking request has been sent! We'll confirm your appointment within 24 hours.</span></div>
+      <div class="alert alert-error" id="booking-error"><i class="fas fa-exclamation-circle"></i><span id="booking-error-msg">Something went wrong. Please try again or call us directly.</span></div>
+
+      <!-- Simple Practice -->
+      <div class="booking-panel active" id="panel-simple-practice">
+        <div class="sp-widget-placeholder">
+          <i class="fas fa-calendar-check"></i>
+          <h3>Simple Practice Online Booking</h3>
+          <p>Our primary booking system. Click below to view available times and book your appointment directly.</p>
+          <a id="sp-booking-link" href="#" class="btn btn-primary btn-lg" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> Open Booking Portal</a>
+          <p style="margin-top: 1.5rem; font-size: 0.85rem; color: var(--text-muted);">You'll be redirected to our secure Simple Practice booking page.</p>
+        </div>
+        <div class="services-grid" style="margin-top: 3rem;">
+          <div class="card" style="text-align: center;"><div class="card-icon" style="margin: 0 auto 1rem;"><i class="fas fa-shield-alt"></i></div><h3>Secure &amp; HIPAA Compliant</h3><p>Your information is protected with enterprise-grade security.</p></div>
+          <div class="card" style="text-align: center;"><div class="card-icon" style="margin: 0 auto 1rem;"><i class="fas fa-file-medical"></i></div><h3>Paperwork Online</h3><p>Complete intake forms digitally before your first visit.</p></div>
+          <div class="card" style="text-align: center;"><div class="card-icon" style="margin: 0 auto 1rem;"><i class="fas fa-bell"></i></div><h3>Automated Reminders</h3><p>Email and text reminders so you never miss an appointment.</p></div>
+        </div>
+      </div>
+
+      <!-- Google Calendar -->
+      <div class="booking-panel" id="panel-google-calendar">
+        <div class="gcal-login-box" id="gcal-login-box">
+          <i class="fab fa-google"></i>
+          <h3>Book via Google Calendar</h3>
+          <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Sign in with your Google account to view available slots and book directly on our calendar.</p>
+          <button class="btn btn-primary btn-lg" id="gcal-login-btn"><i class="fab fa-google"></i> Sign In with Google</button>
+          <p style="margin-top: 1rem; font-size: 0.8rem; color: var(--text-light);">We only access your calendar to create the appointment. We never read or store your data.</p>
+        </div>
+        <div id="gcal-calendar-view" style="display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+            <h3 style="margin: 0;">Select a Date &amp; Time</h3>
+            <button class="btn btn-sm btn-outline" id="gcal-logout-btn"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
+          </div>
+          <div class="gcal-event-form">
+            <h4 style="margin-bottom: 1.5rem;">Book Your Appointment</h4>
+            <form id="gcal-booking-form">
+              <div class="form-row">
+                <div class="form-group"><label>Your Name <span class="required">*</span></label><input type="text" class="form-control" id="gcal-name" required placeholder="Full name"></div>
+                <div class="form-group"><label>Email <span class="required">*</span></label><input type="email" class="form-control" id="gcal-email" required placeholder="your@email.com"></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label>Preferred Date <span class="required">*</span></label><input type="date" class="form-control" id="gcal-date" required></div>
+                <div class="form-group"><label>Preferred Time <span class="required">*</span></label>
+                  <select class="form-control" id="gcal-time" required>
+                    <option value="">Select a time</option>
+                    <option value="09:00">9:00 AM</option><option value="09:30">9:30 AM</option>
+                    <option value="10:00">10:00 AM</option><option value="10:30">10:30 AM</option>
+                    <option value="11:00">11:00 AM</option><option value="11:30">11:30 AM</option>
+                    <option value="12:00">12:00 PM</option><option value="12:30">12:30 PM</option>
+                    <option value="13:00">1:00 PM</option><option value="13:30">1:30 PM</option>
+                    <option value="14:00">2:00 PM</option><option value="14:30">2:30 PM</option>
+                    <option value="15:00">3:00 PM</option><option value="15:30">3:30 PM</option>
+                    <option value="16:00">4:00 PM</option><option value="16:30">4:30 PM</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group"><label>Service Type</label><select class="form-control" id="gcal-service"></select></div>
+              <div class="form-group"><label>Notes (optional)</label><textarea class="form-control" id="gcal-notes" rows="3" placeholder="Any details about your appointment..."></textarea></div>
+              <button type="submit" class="btn btn-primary btn-block btn-lg"><i class="fas fa-calendar-plus"></i> Create Appointment</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Manual Form -->
+      <div class="booking-panel" id="panel-manual-form">
+        <div style="max-width: 700px; margin: 0 auto;">
+          <div class="card" style="padding: 3rem;">
+            <h3 style="margin-bottom: 0.5rem;">Request an Appointment</h3>
+            <p style="color: var(--text-muted); margin-bottom: 2rem;">Fill out the form below and we'll get back to you within 24 hours to confirm.</p>
+            <form id="manual-booking-form">
+              <div class="form-row">
+                <div class="form-group"><label>First Name <span class="required">*</span></label><input type="text" class="form-control" name="firstName" required placeholder="First name"></div>
+                <div class="form-group"><label>Last Name <span class="required">*</span></label><input type="text" class="form-control" name="lastName" required placeholder="Last name"></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label>Email <span class="required">*</span></label><input type="email" class="form-control" name="email" required placeholder="your@email.com"></div>
+                <div class="form-group"><label>Phone <span class="required">*</span></label><input type="tel" class="form-control" name="phone" required placeholder="(555) 123-4567"></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label>Child / Client Age</label><input type="text" class="form-control" name="clientAge" placeholder="e.g., 5 years old"></div>
+                <div class="form-group"><label>Location (State)</label>
+                  <select class="form-control" name="state">
+                    <option value="">Select your state...</option>
+                    <option value="Virginia">Virginia</option>
+                    <option value="Washington, DC">Washington, DC</option>
+                    <option value="Florida">Florida</option>
+                    <option value="Texas">Texas</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label>Preferred Date <span class="required">*</span></label><input type="date" class="form-control" name="preferredDate" required></div>
+                <div class="form-group"><label>Preferred Time <span class="required">*</span></label>
+                  <select class="form-control" name="preferredTime" required>
+                    <option value="">Select a time</option>
+                    <option value="Morning (9-12)">Morning (9 AM - 12 PM)</option>
+                    <option value="Afternoon (12-3)">Afternoon (12 - 3 PM)</option>
+                    <option value="Late Afternoon (3-5)">Late Afternoon (3 - 5 PM)</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group"><label>Service of Interest</label><select class="form-control" name="service" id="manual-service-select"></select></div>
+              <div class="form-group"><label>Brief Message / Goals</label><textarea class="form-control" name="notes" rows="4" placeholder="Tell us a bit about your child and what you're looking for..."></textarea></div>
+              <button type="submit" class="btn btn-primary btn-block btn-lg"><i class="fas fa-paper-plane"></i> Submit Request</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section class="section-padding bg-warm">
+    <div class="container text-center">
+      <p class="section-label">Your First Visit</p>
+      <h2 class="section-title">What to Expect</h2>
+      <p class="section-subtitle">Starting therapy is simple. Here's what happens after you book.</p>
+      <div class="process-grid">
+        <div class="process-step fade-up delay-1"><div class="process-number">1</div><h3>Book &amp; Connect</h3><p>Schedule your free consultation and tell us about your child's needs and goals.</p></div>
+        <div class="process-step fade-up delay-2"><div class="process-number">2</div><h3>Personalized Evaluation</h3><p>We conduct a comprehensive evaluation in your child's natural environment.</p></div>
+        <div class="process-step fade-up delay-3"><div class="process-number">3</div><h3>Collaborative Plan</h3><p>Receive a customized treatment plan with clear goals and practical strategies for home.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand"><img src="images/logo-full.png" alt="DunnWell Therapy"><p>Relationship-centered, individualized occupational therapy that supports meaningful participation in everyday life. Therapy, Dunn Well.</p><div class="footer-social" id="footer-social"></div></div>
+        <div><h4>Quick Links</h4><ul class="footer-links"><li><a href="index.html">Home</a></li><li><a href="about.html">About</a></li><li><a href="services.html">Services</a></li><li><a href="book.html">Book Consultation</a></li><li><a href="blog.html">Blog</a></li><li><a href="contact.html">Contact</a></li></ul></div>
+        <div><h4>Services</h4><ul class="footer-links" id="footer-services"></ul></div>
+        <div><h4>Contact</h4><div id="footer-contact"></div></div>
+      </div>
+      <div class="footer-bottom"><span>&copy; <span id="footer-year"></span> DunnWell Therapy, LLC. All rights reserved.</span><span>Therapy, Dunn Well.</span></div>
+    </div>
+  </footer>
+
+  <button class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-chevron-up"></i></button>
+  <!-- Firebase SDKs (free Spark tier) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/firebase-loader.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/calendar.js"></script>
+</body>
+</html>

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Contact DunnWell Therapy. Reach out for questions, scheduling, or to learn more about our occupational therapy services.">
+  <title>Contact | DunnWell Therapy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+</head>
+<body>
+
+  <div class="announcement-bar" id="announcementBar">
+    Now accepting new families! <a href="book.html">Book your FREE consultation today</a>
+    <button class="close-bar" id="closeBar" aria-label="Close">&times;</button>
+  </div>
+
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="nav-logo"><img src="images/logo-full.png" alt="DunnWell Therapy"></a>
+      <div class="nav-links" id="navLinks">
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="services.html">Services</a>
+        <a href="blog.html">Blog</a>
+        <a href="contact.html" class="active">Contact</a>
+        <a href="book.html" class="btn btn-primary btn-sm">Book Consultation</a>
+      </div>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><span></span><span></span><span></span></button>
+    </div>
+  </nav>
+
+  <section class="page-hero">
+    <div class="container">
+      <p class="section-label">Get In Touch</p>
+      <h1>Contact Us</h1>
+      <div class="divider"></div>
+      <p>We'd love to hear from you. Reach out with questions or to learn more about how we can support your family.</p>
+    </div>
+  </section>
+
+  <!-- Contact -->
+  <section class="section-padding-lg">
+    <div class="container">
+      <div class="alert alert-success" id="contact-success"><i class="fas fa-check-circle"></i><span>Your message has been sent successfully! We'll get back to you within 24 hours.</span></div>
+      <div class="alert alert-error" id="contact-error"><i class="fas fa-exclamation-circle"></i><span id="contact-error-msg">Something went wrong. Please try again or call us directly.</span></div>
+
+      <div class="contact-grid">
+        <div class="fade-up">
+          <h2 style="margin-bottom: 0.5rem;">Send Us a Message</h2>
+          <p style="color: var(--text-muted); margin-bottom: 2rem;">Fill out the form below and we'll respond within 24 business hours.</p>
+          <form id="contact-form">
+            <div class="form-row">
+              <div class="form-group"><label>First Name <span class="required">*</span></label><input type="text" class="form-control" name="firstName" required placeholder="First name"></div>
+              <div class="form-group"><label>Last Name <span class="required">*</span></label><input type="text" class="form-control" name="lastName" required placeholder="Last name"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Email <span class="required">*</span></label><input type="email" class="form-control" name="email" required placeholder="your@email.com"></div>
+              <div class="form-group"><label>Phone</label><input type="tel" class="form-control" name="phone" placeholder="(555) 123-4567"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Child / Client Age</label><input type="text" class="form-control" name="clientAge" placeholder="e.g., 5 years old"></div>
+              <div class="form-group">
+                <label>Service of Interest</label>
+                <select class="form-control" name="serviceInterest" id="service-interest-select">
+                  <option value="">Select a service...</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>State</label>
+                <select class="form-control" name="state">
+                  <option value="">Select your state...</option>
+                  <option value="Virginia">Virginia</option>
+                  <option value="Washington, DC">Washington, DC</option>
+                  <option value="Florida">Florida</option>
+                  <option value="Texas">Texas</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div class="form-group"><label>City</label><input type="text" class="form-control" name="city" placeholder="Your city"></div>
+            </div>
+            <div class="form-group">
+              <label>Brief Message / Goals <span class="required">*</span></label>
+              <textarea class="form-control" name="message" rows="5" required placeholder="Tell us a bit about your child and what you're looking for..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary btn-lg" id="contact-submit-btn"><i class="fas fa-paper-plane"></i> Send Message</button>
+          </form>
+        </div>
+
+        <div class="fade-right">
+          <div class="contact-info-box">
+            <h3>Contact Information</h3>
+            <div class="contact-info-item"><div class="contact-info-icon"><i class="fas fa-phone"></i></div><div class="contact-info-text"><h4>Phone</h4><p id="contact-phone"></p></div></div>
+            <div class="contact-info-item"><div class="contact-info-icon"><i class="fas fa-fax"></i></div><div class="contact-info-text"><h4>Fax</h4><p id="contact-fax"></p></div></div>
+            <div class="contact-info-item"><div class="contact-info-icon"><i class="fas fa-envelope"></i></div><div class="contact-info-text"><h4>Email</h4><p id="contact-email"></p></div></div>
+            <div class="contact-info-item"><div class="contact-info-icon"><i class="fas fa-location-dot"></i></div><div class="contact-info-text"><h4>Address</h4><p id="contact-address"></p></div></div>
+            <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 1.5rem 0;">
+            <h4 style="color: var(--mauve); font-family: var(--font-body); font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 0.75rem;">Office Hours</h4>
+            <ul class="hours-list" id="contact-hours"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Map -->
+  <section class="map-section">
+    <iframe id="contact-map" src="" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Office location"></iframe>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand"><img src="images/logo-full.png" alt="DunnWell Therapy"><p>Relationship-centered, individualized occupational therapy that supports meaningful participation in everyday life. Therapy, Dunn Well.</p><div class="footer-social" id="footer-social"></div></div>
+        <div><h4>Quick Links</h4><ul class="footer-links"><li><a href="index.html">Home</a></li><li><a href="about.html">About</a></li><li><a href="services.html">Services</a></li><li><a href="book.html">Book Consultation</a></li><li><a href="blog.html">Blog</a></li><li><a href="contact.html">Contact</a></li></ul></div>
+        <div><h4>Services</h4><ul class="footer-links" id="footer-services"></ul></div>
+        <div><h4>Contact</h4><div id="footer-contact"></div></div>
+      </div>
+      <div class="footer-bottom"><span>&copy; <span id="footer-year"></span> DunnWell Therapy, LLC. All rights reserved.</span><span>Therapy, Dunn Well.</span></div>
+    </div>
+  </footer>
+
+  <button class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-chevron-up"></i></button>
+  <!-- Firebase SDKs (free Spark tier) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/firebase-loader.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/contact.js"></script>
+</body>
+</html>

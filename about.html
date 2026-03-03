@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Meet Bianca Dunn, MSOT, OTR/L, Founder of DunnWell Therapy, LLC. Over 8 years of experience in relationship-centered occupational therapy for children, teens, and families.">
+  <title>About | DunnWell Therapy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <div class="announcement-bar" id="announcementBar">
+    Now accepting new families! <a href="book.html">Book your FREE consultation today</a>
+    <button class="close-bar" id="closeBar" aria-label="Close">&times;</button>
+  </div>
+
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="nav-logo"><img src="images/logo-full.png" alt="DunnWell Therapy"></a>
+      <div class="nav-links" id="navLinks">
+        <a href="index.html">Home</a>
+        <a href="about.html" class="active">About</a>
+        <a href="services.html">Services</a>
+        <a href="blog.html">Blog</a>
+        <a href="contact.html">Contact</a>
+        <a href="book.html" class="btn btn-primary btn-sm">Book Consultation</a>
+      </div>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><span></span><span></span><span></span></button>
+    </div>
+  </nav>
+
+  <section class="page-hero">
+    <div class="container">
+      <p class="section-label">About DunnWell</p>
+      <h1>Meet Your Therapist</h1>
+      <div class="divider"></div>
+      <p>Relationship-centered, individualized occupational therapy that supports meaningful participation in everyday life.</p>
+    </div>
+  </section>
+
+  <!-- About Full Bio -->
+  <section class="section-padding-lg">
+    <div class="container">
+      <div class="about-grid">
+        <div class="about-image-wrapper fade-left">
+          <div class="about-placeholder">
+            <img src="images/bianca-dunn.png" alt="Bianca Dunn, MSOT, OTR/L, Founder of DunnWell Therapy">
+          </div>
+        </div>
+        <div class="about-content fade-right">
+          <h2 id="about-name-full"></h2>
+          <p class="credentials" id="about-credentials-full"></p>
+          <div id="about-bio-full"></div>
+          <div class="about-lists">
+            <div>
+              <h4>Education</h4>
+              <ul id="about-education"></ul>
+            </div>
+            <div>
+              <h4>Certifications</h4>
+              <ul id="about-certifications"></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Mission -->
+  <section class="cta-section cta-quote">
+    <div class="container">
+      <p class="section-label" style="color: var(--mauve);">Our Mission</p>
+      <p id="about-mission" style="font-size: 1.15rem; line-height: 1.9; max-width: 900px; margin: 0 auto;"></p>
+    </div>
+  </section>
+
+  <!-- Payment Info -->
+  <section class="section-padding-lg">
+    <div class="container">
+      <div style="max-width: 800px; margin: 0 auto; text-align: center;">
+        <p class="section-label">Payment Information</p>
+        <h2 class="section-title">Private-Pay Practice</h2>
+        <p id="about-payment" style="line-height: 1.85; color: var(--text-body); font-size: 1rem;"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Service Locations -->
+  <section class="section-padding bg-warm">
+    <div class="container text-center">
+      <p class="section-label">Where We Serve</p>
+      <h2 class="section-title">Service Locations</h2>
+      <p class="section-subtitle">We offer flexible service delivery to meet you where you are.</p>
+      <div class="services-grid" id="service-locations" style="margin-top: 1rem;"></div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section">
+    <div class="container">
+      <h2>Ready to Start Your Journey?</h2>
+      <p>Schedule a free consultation and let's discuss how DunnWell Therapy can support your family.</p>
+      <div class="cta-buttons">
+        <a href="book.html" class="btn btn-white btn-lg"><i class="fas fa-calendar-check"></i> Book Consultation</a>
+        <a href="contact.html" class="btn btn-white-outline btn-lg"><i class="fas fa-envelope"></i> Contact Us</a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <img src="images/logo-full.png" alt="DunnWell Therapy">
+          <p>Relationship-centered, individualized occupational therapy that supports meaningful participation in everyday life. Therapy, Dunn Well.</p>
+          <div class="footer-social" id="footer-social"></div>
+        </div>
+        <div><h4>Quick Links</h4><ul class="footer-links"><li><a href="index.html">Home</a></li><li><a href="about.html">About</a></li><li><a href="services.html">Services</a></li><li><a href="book.html">Book Consultation</a></li><li><a href="blog.html">Blog</a></li><li><a href="contact.html">Contact</a></li></ul></div>
+        <div><h4>Services</h4><ul class="footer-links" id="footer-services"></ul></div>
+        <div><h4>Contact</h4><div id="footer-contact"></div></div>
+      </div>
+      <div class="footer-bottom"><span>&copy; <span id="footer-year"></span> DunnWell Therapy, LLC. All rights reserved.</span><span>Therapy, Dunn Well.</span></div>
+    </div>
+  </footer>
+
+  <button class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-chevron-up"></i></button>
+  <!-- Firebase SDKs (free Spark tier) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/firebase-loader.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
