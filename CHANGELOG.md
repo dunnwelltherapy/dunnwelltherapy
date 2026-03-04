@@ -290,6 +290,40 @@ New image files: `images/aota.png`, `images/dc-health.png`, `images/florida-heal
 - Updated meta descriptions across all pages
 - Consistent branding: "DunnWell Therapy, LLC" throughout
 
+### 15. Clinical Notes (Private Admin Feature)
+
+Added a private clinical notes system to the admin panel for documenting patient sessions. This is admin-only and does not appear on the public website.
+
+**Two-level UI: Patients → Notes**
+- Left panel: searchable patient sidebar with Active/Discharged/All filter
+- Right panel: notes list and editor for the selected patient
+
+**Firestore collections:**
+- `patients` — firstName, lastName, dateOfBirth, guardianName, phone, email, diagnosis, status (active/discharged)
+- `clinicalNotes` — patientId, sessionDate, noteType, SOAP fields (subjective/objective/assessment/plan), narrative field, duration, status (draft/final)
+
+**Note types:**
+- **SOAP** — 4 labeled textareas (Subjective, Objective, Assessment, Plan)
+- **Narrative** — single large textarea
+- **Progress** — single large textarea
+
+**Auto-save:**
+- Debounced save: 2 seconds after last keystroke in any note field
+- Visual indicator: "Saving..." → "Saved" in the modal header
+- Notes start as draft, can be marked "final" manually
+
+**Email:**
+- "Email Note" button generates a `mailto:` link with pre-filled subject and formatted SOAP/narrative body
+- Uses browser's default mail client, no server-side email needed
+
+**Dashboard:**
+- Added "Patients" stat card to the dashboard stats grid
+
+**Files modified:**
+- `admin.html` — sidebar nav link, `#section-notes` section with patient/note layout, patient modal, note editor modal
+- `js/admin.js` — patient CRUD, note CRUD, auto-save logic, email helper, search/filter, dashboard stat
+- `css/admin.css` — notes two-panel grid layout, patient sidebar, note cards, SOAP field labels, save indicator, responsive stacking
+
 ---
 
 ## Config-Driven Content (`js/config.js`)
