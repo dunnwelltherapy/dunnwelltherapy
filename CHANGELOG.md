@@ -18,8 +18,8 @@ Professional website for **DunnWell Therapy, LLC**, an occupational therapy prac
 - **Config-driven content** via `js/config.js` (fallback when Firebase is unavailable)
 - **Quill.js** rich text editor for blog posts in admin panel
 - **EmailJS** for dual-email contact form delivery (with mailto fallback)
-- **Google Calendar API** OAuth2 integration (placeholder credentials)
-- **Simple Practice** booking widget embed (placeholder URL)
+- **Google Apps Script** for automated calendar booking (no client-side sign-in required)
+- **Google Calendar** event creation + email confirmations via Apps Script
 - **Google Fonts:** Playfair Display (headings) + Inter (body)
 - **Font Awesome 6.5.1** for icons
 - **IntersectionObserver** for scroll animations
@@ -36,7 +36,7 @@ Professional website for **DunnWell Therapy, LLC**, an occupational therapy prac
 ├── about.html              # About / Meet Your Therapist
 ├── services.html           # Services page
 ├── contact.html            # Contact form + info
-├── book.html               # Book Consultation (3 methods)
+├── book.html               # Book Consultation (single unified form)
 ├── blog.html               # Blog / Resources
 ├── admin.html              # Admin dashboard (password-protected)
 ├── css/
@@ -49,7 +49,7 @@ Professional website for **DunnWell Therapy, LLC**, an occupational therapy prac
 │   ├── admin.js            # Admin CRUD logic, auth, image uploads, rich text editor
 │   ├── main.js             # Core JS (nav, footer, renders)
 │   ├── contact.js          # Contact form handler
-│   ├── calendar.js         # Google Calendar OAuth flow
+│   ├── calendar.js         # Google Apps Script booking integration
 │   └── blog.js             # Blog rendering & filtering
 ├── images/
 │   ├── logo-full.png       # Logo with tagline (Design 1, purple)
@@ -62,7 +62,8 @@ Professional website for **DunnWell Therapy, LLC**, an occupational therapy prac
 │   ├── aota.png              # AOTA credential logo (transparent)
 │   ├── dc-health.png         # DC Health credential logo
 │   ├── florida-health.png    # Florida Health credential logo (transparent)
-│   └── texas-hhs.png         # Texas HHS credential logo (transparent)
+│   ├── texas-hhs.png         # Texas HHS credential logo (transparent)
+│   └── children-playing.png  # Children playing photo (Who We Help section)
 └── CHANGELOG.md            # This file
 ```
 
@@ -323,6 +324,39 @@ Added a private clinical notes system to the admin panel for documenting patient
 - `admin.html` — sidebar nav link, `#section-notes` section with patient/note layout, patient modal, note editor modal
 - `js/admin.js` — patient CRUD, note CRUD, auto-save logic, email helper, search/filter, dashboard stat
 - `css/admin.css` — notes two-panel grid layout, patient sidebar, note cards, SOAP field labels, save indicator, responsive stacking
+
+### 16. Contact Info Update
+
+Updated all contact information across the site:
+- **Email:** `care@dunnwelltherapy.com` (was `contact@dunnwelltherapy.com`)
+- **Phone:** `(786) 479-3593` (was placeholder)
+- **Fax:** removed
+- **Credentials:** MSOT, OTR/L (unchanged)
+
+Files modified: `js/config.js`, `admin.html`, `book.html`, `contact.html`
+
+### 17. Google Calendar Booking Integration
+
+Replaced the old Google OAuth sign-in flow with a **Google Apps Script** integration. Clients no longer need to sign in with Google to book.
+
+**How it works:**
+1. Client fills out the booking form (name, email, phone, date, time, service, notes)
+2. Form posts to a Google Apps Script web app
+3. Apps Script creates the event on the business Google Calendar
+4. Apps Script sends a confirmation email to the client
+5. Apps Script sends a notification email to `care@dunnwelltherapy.com`
+
+**Apps Script URL:** `https://script.google.com/macros/s/AKfycbw.../exec`
+
+**Booking form consolidated:** Removed Simple Practice tab and Request Form tab. Combined into a single unified booking form with all fields (first name, last name, email, phone, child age, state, date, time, service, notes).
+
+Files modified: `book.html`, `js/calendar.js`
+
+### 18. Who We Help Photo
+
+Replaced the icon placeholder in the "Who We Help" split section with a real photo of children playing outdoors (`images/children-playing.png`).
+
+Files modified: `index.html`
 
 ---
 
