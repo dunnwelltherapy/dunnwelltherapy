@@ -5,7 +5,7 @@
    a confirmation email. No client-side sign-in required.
    ============================================================ */
 
-const APPS_SCRIPT_URL = 'https://script.google.com/a/macros/dunnwelltherapy.com/s/AKfycbwQUJmmufNyo6wE4_eh5d61P0ySslX4dAhQdR6psu8Sqw_WRSp7Wujl0GtjibeL1A9Snw/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwQUJmmufNyo6wE4_eh5d61P0ySslX4dAhQdR6psu8Sqw_WRSp7Wujl0GtjibeL1A9Snw/exec';
 
 document.addEventListener('DOMContentLoaded', () => {
   const bookingForm = document.getElementById('gcal-booking-form');
