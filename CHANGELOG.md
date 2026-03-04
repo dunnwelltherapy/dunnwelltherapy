@@ -366,10 +366,10 @@ All site content is managed from a single file. To update the website, edit `con
 | Simple Practice Widget | `YOUR_WIDGET_ID` | Simple Practice settings |
 | Google Calendar Client ID | `YOUR_GOOGLE_CLIENT_ID` | Google Cloud Console |
 | Google Calendar API Key | `YOUR_GOOGLE_API_KEY` | Google Cloud Console |
-| Primary Email | `contact@dunnwelltherapy.com` | Update with real email |
-| Secondary Email | `bookings@dunnwelltherapy.com` | Update with real email |
-| Phone | `(555) 123-4567` | Update with real phone |
-| Fax | `(555) 123-4568` | Update with real fax |
+| Primary Email | `care@dunnwelltherapy.com` | ✅ Updated |
+| Secondary Email | `care@dunnwelltherapy.com` | ✅ Updated |
+| Phone | `(786) 479-3593` | ✅ Updated |
+| Fax | *(removed)* | No fax needed |
 | Social Media Links | Placeholder URLs | Update with real profiles |
 | Google Maps Embed | Arlington, VA generic | Update with exact address |
 

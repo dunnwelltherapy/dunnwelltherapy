@@ -20,16 +20,16 @@ const SITE_CONFIG = {
   subtitle: "Supporting Regulation, Independence & Everyday Success",
   heroTagline: "Personalized Occupational Therapy for Children, Teens & Families",
   heroDelivery: "In-home \u2022 Virtual \u2022 School & IEP Consulting",
-  phone: "(555) 123-4567",
-  fax: "(555) 123-4568",
+  phone: "(786) 479-3593",
+  fax: "",
   address: "Arlington / Alexandria, Virginia",
   googleMapsEmbed: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d99370.14887809972!2d-77.17089655!3d38.87969835!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89b7b69c3ba26889%3A0x89dba82bfe5765b3!2sArlington%2C%20VA!5e0!3m2!1sen!2sus!4v1709500000000!5m2!1sen!2sus",
 
   /* ----------------------------------------------------------
    *  EMAIL ADDRESSES (contact form sends to BOTH)
    * ---------------------------------------------------------- */
-  emailPrimary: "contact@dunnwelltherapy.com",
-  emailSecondary: "bookings@dunnwelltherapy.com",
+  emailPrimary: "care@dunnwelltherapy.com",
+  emailSecondary: "care@dunnwelltherapy.com",
 
   /* ----------------------------------------------------------
    *  EMAILJS CONFIGURATION
