@@ -40,31 +40,59 @@ async function handleGCalBooking(e) {
   submitBtn.disabled = true;
   submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Booking...';
 
+  const payload = JSON.stringify({
+    name,
+    email,
+    phone,
+    age,
+    state,
+    date,
+    time,
+    service,
+    notes,
+    duration: 60
+  });
+
   try {
-    await fetch(APPS_SCRIPT_URL, {
+    // Send as text/plain to avoid CORS preflight issues with Apps Script
+    const response = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name,
-        email,
-        phone,
-        age,
-        state,
-        date,
-        time,
-        service,
-        notes,
-        duration: 60
-      })
+      headers: { 'Content-Type': 'text/plain' },
+      body: payload,
+      redirect: 'follow'
     });
 
-    // With no-cors mode we can't read the response, but if fetch didn't throw it was sent
-    window.showAlert('booking-success');
-    e.target.reset();
+    let success = false;
+    try {
+      const result = await response.json();
+      success = result.success;
+    } catch (_) {
+      // If we can't parse JSON, check if response was ok
+      success = response.ok || response.type === 'opaque';
+    }
+
+    if (success !== false) {
+      window.showAlert('booking-success');
+      e.target.reset();
+    } else {
+      window.showAlert('booking-error');
+    }
   } catch (err) {
     console.error('Booking error:', err);
-    window.showAlert('booking-error');
+    // Fallback: try no-cors mode
+    try {
+      await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body: payload
+      });
+      window.showAlert('booking-success');
+      e.target.reset();
+    } catch (err2) {
+      console.error('Fallback booking error:', err2);
+      window.showAlert('booking-error');
+    }
   } finally {
     submitBtn.disabled = false;
     submitBtn.innerHTML = originalText;
