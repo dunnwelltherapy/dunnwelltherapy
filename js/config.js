@@ -54,8 +54,8 @@ const SITE_CONFIG = {
    *  GOOGLE CALENDAR (fallback booking)
    * ---------------------------------------------------------- */
   googleCalendar: {
-    clientId: "566973628380-24linikb7v2r9svqp343lu4t0qmgqcbu.apps.googleusercontent.com",
-    apiKey: "AIzaSyBf6AZ2dG_dmDVQrtgPUfBmzeF9FZZ9K0g",
+    clientId: "1090467909421-u5aklg5d82vvs966ck0c353ntesfek3f.apps.googleusercontent.com",
+    apiKey: "AIzaSyBR05wTUI6F6Pn8KFS4_girzlztDQk08fA",
     calendarId: "primary",
     scopes: "https://www.googleapis.com/auth/calendar.events",
   },
