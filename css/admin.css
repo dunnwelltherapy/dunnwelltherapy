@@ -750,6 +750,49 @@ select.form-control {
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
+/* === VIDEO TESTIMONIAL ADMIN === */
+.video-testimonial-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid #F3E8F3;
+  border-radius: 12px;
+  margin-bottom: 0.75rem;
+  background: #FDFAFD;
+}
+.video-testimonial-item video {
+  width: 160px;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 8px;
+  background: #000;
+  flex-shrink: 0;
+}
+.video-testimonial-item .video-info {
+  flex: 1;
+  min-width: 0;
+}
+.video-testimonial-item .video-info p {
+  font-size: 0.82rem;
+  color: #7A6A7B;
+  margin: 0;
+  word-break: break-all;
+}
+.video-testimonial-item .video-info .video-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #2D1B2E;
+  margin-bottom: 0.15rem;
+}
+.video-upload-progress {
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+  color: #6B2D5B;
+  display: none;
+}
+.video-upload-progress.show { display: flex; align-items: center; gap: 0.5rem; }
+
 /* === CLINICAL NOTES LAYOUT === */
 .notes-layout {
   display: grid;

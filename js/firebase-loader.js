@@ -126,6 +126,19 @@ async function loadFirebaseContent() {
       });
     }
 
+    // Load video testimonials
+    try {
+      const videoSnap = await db.collection('videoTestimonials').get();
+      if (!videoSnap.empty) {
+        const videos = [];
+        videoSnap.forEach(doc => videos.push(doc.data()));
+        videos.sort((a, b) => (a.order || 0) - (b.order || 0));
+        SITE_CONFIG.videoTestimonials = videos;
+      }
+    } catch (e) {
+      console.warn('Video testimonials load failed:', e.message);
+    }
+
   } catch (err) {
     console.warn('Firebase load failed, using config.js fallback:', err.message);
   }

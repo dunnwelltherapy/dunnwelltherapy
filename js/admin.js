@@ -124,7 +124,7 @@
       case 'dashboard': loadDashboard(); break;
       case 'homepage': loadHomepage(); break;
       case 'blog': loadBlogPosts(); break;
-      case 'testimonials': loadTestimonials(); break;
+      case 'testimonials': loadTestimonials(); loadVideoTestimonials(); break;
       case 'services': loadServices(); loadServicesExtra(); break;
       case 'about': loadAbout(); break;
       case 'settings': loadSettings(); break;
@@ -416,6 +416,136 @@
         showToast('Delete failed: ' + e.message, 'error');
       }
     };
+    showModal('confirm-modal');
+  }
+
+  // ---- Video Testimonials ----
+  async function loadVideoTestimonials() {
+    const container = document.getElementById('video-testimonials-list');
+    if (!container) return;
+    container.innerHTML = '<div class="admin-loading"><div class="admin-spinner"></div></div>';
+
+    try {
+      let snap = await db.collection('videoTestimonials').get();
+
+      // Seed existing videos on first load if collection is empty
+      if (snap.empty) {
+        const seedVideos = [
+          { url: 'images/testimonial-video.mp4', label: 'Video Testimonial 1', order: 0 },
+          { url: 'images/testimonial-video-2.mp4', label: 'Video Testimonial 2', order: 1 }
+        ];
+        for (const v of seedVideos) {
+          v.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+          await db.collection('videoTestimonials').add(v);
+        }
+        snap = await db.collection('videoTestimonials').get();
+      }
+
+      const videos = [];
+      snap.forEach(doc => videos.push({ id: doc.id, ...doc.data() }));
+      videos.sort((a, b) => (a.order || 0) - (b.order || 0));
+
+      if (videos.length === 0) {
+        container.innerHTML = '<div class="empty-state" style="padding:1.5rem;"><i class="fas fa-video" style="font-size:2rem;"></i><p style="font-size:0.85rem;">No video testimonials yet.</p></div>';
+        return;
+      }
+
+      container.innerHTML = '';
+      videos.forEach(v => {
+        const item = document.createElement('div');
+        item.className = 'video-testimonial-item';
+        item.innerHTML = `
+          <video preload="metadata">
+            <source src="${escapeHtml(v.url)}" type="video/mp4">
+          </video>
+          <div class="video-info">
+            <p class="video-label">${escapeHtml(v.label || 'Video Testimonial')}</p>
+            <p>${escapeHtml(truncate(v.url, 60))}</p>
+          </div>
+          <div class="admin-item-actions">
+            <button class="btn btn-sm btn-danger" onclick="adminPanel.deleteVideoTestimonial('${v.id}')"><i class="fas fa-trash"></i></button>
+          </div>`;
+        container.appendChild(item);
+      });
+    } catch (e) {
+      container.innerHTML = '<div class="empty-state"><p>' + escapeHtml(e.message) + '</p></div>';
+    }
+  }
+
+  async function addVideoTestimonialByUrl() {
+    const url = prompt('Enter the video URL (e.g., images/my-video.mp4 or https://...):');
+    if (!url || !url.trim()) return;
+
+    const label = prompt('Enter a label for this video (optional):', 'Video Testimonial') || 'Video Testimonial';
+
+    try {
+      const snap = await db.collection('videoTestimonials').get();
+      await db.collection('videoTestimonials').add({
+        url: url.trim(),
+        label: label.trim(),
+        order: snap.size,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      showToast('Video testimonial added!', 'success');
+      loadVideoTestimonials();
+    } catch (e) {
+      showToast('Failed to add video: ' + e.message, 'error');
+    }
+  }
+
+  async function uploadVideoTestimonial(file) {
+    if (!file || !file.type.startsWith('video/')) {
+      showToast('Please select a video file.', 'error');
+      return;
+    }
+
+    // Check file size (50MB limit for free hosting)
+    if (file.size > 50 * 1024 * 1024) {
+      showToast('Video must be under 50MB.', 'error');
+      return;
+    }
+
+    const label = prompt('Enter a label for this video (optional):', 'Video Testimonial') || 'Video Testimonial';
+
+    // Generate a filename
+    const ext = file.name.split('.').pop().toLowerCase();
+    const filename = 'testimonial-video-' + Date.now() + '.' + ext;
+    const filePath = 'images/' + filename;
+
+    // Try Firebase Storage first (if available on Blaze plan)
+    try {
+      const ref = storage.ref(filePath);
+      showToast('Uploading video...', 'success');
+      const snapshot = await ref.put(file);
+      const downloadUrl = await snapshot.ref.getDownloadURL();
+
+      const snap = await db.collection('videoTestimonials').get();
+      await db.collection('videoTestimonials').add({
+        url: downloadUrl,
+        label: label.trim(),
+        order: snap.size,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      showToast('Video uploaded and added!', 'success');
+      loadVideoTestimonials();
+    } catch (e) {
+      // Firebase Storage may not be available (Spark plan)
+      // Fall back to telling the user to add the file manually
+      showToast('Storage upload not available. Add the video file to images/ folder and use "Add by URL" with the path.', 'error');
+    }
+  }
+
+  function deleteVideoTestimonial(docId) {
+    pendingDeleteFn = async () => {
+      try {
+        await db.collection('videoTestimonials').doc(docId).delete();
+        showToast('Video testimonial removed.', 'success');
+        loadVideoTestimonials();
+      } catch (e) {
+        showToast('Delete failed: ' + e.message, 'error');
+      }
+    };
+    document.getElementById('confirm-message').textContent = 'Remove this video testimonial?';
     showModal('confirm-modal');
   }
 
@@ -1592,6 +1722,18 @@
     document.getElementById('add-testimonial-btn').addEventListener('click', () => openTestimonialModal(null));
     document.getElementById('save-testimonial-btn').addEventListener('click', saveTestimonial);
 
+    // Video testimonials
+    document.getElementById('add-video-url-btn').addEventListener('click', addVideoTestimonialByUrl);
+    document.getElementById('add-video-upload-btn').addEventListener('click', () => {
+      document.getElementById('video-upload-input').click();
+    });
+    document.getElementById('video-upload-input').addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        uploadVideoTestimonial(e.target.files[0]);
+        e.target.value = '';
+      }
+    });
+
     document.getElementById('add-service-btn').addEventListener('click', () => openServiceModal(null));
     document.getElementById('save-service-btn').addEventListener('click', saveService);
     document.getElementById('add-feature-btn').addEventListener('click', () => addFeatureRow(''));
@@ -1673,6 +1815,7 @@
     deleteBlog,
     editTestimonial,
     deleteTestimonial,
+    deleteVideoTestimonial,
     editService,
     deleteService,
     copyImageUrl,

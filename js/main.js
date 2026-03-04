@@ -353,6 +353,25 @@ function renderTestimonials() {
       </div>
     </div>
   `).join('');
+
+  // Render video testimonials dynamically
+  const videoContainer = document.getElementById('video-testimonials-container');
+  if (videoContainer && SITE_CONFIG.videoTestimonials && SITE_CONFIG.videoTestimonials.length > 0) {
+    const cols = SITE_CONFIG.videoTestimonials.length === 1 ? '1fr' : '1fr 1fr';
+    videoContainer.style.gridTemplateColumns = cols;
+    videoContainer.innerHTML = SITE_CONFIG.videoTestimonials.map(v => `
+      <div class="video-testimonial">
+        <video controls preload="metadata">
+          <source src="${v.url}" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>
+      </div>
+    `).join('');
+    videoContainer.style.display = 'grid';
+  } else if (videoContainer && (!SITE_CONFIG.videoTestimonials || SITE_CONFIG.videoTestimonials.length === 0)) {
+    videoContainer.style.display = 'none';
+  }
+
   initScrollEffects();
 }
 
