@@ -1209,7 +1209,8 @@ select.form-control {
 @media (max-width: 768px) {
   .announcement-bar { font-size: 0.82rem; padding: 0.6rem 2.5rem 0.6rem 1rem; }
   .nav-logo img { height: 350px; }
-  .nav-container { height: 140px; }
+  .nav-container { height: 140px; justify-content: center; position: relative; }
+  .nav-toggle { position: absolute; right: 1.5rem; top: 50%; transform: translateY(-50%); }
   .nav-links {
     position: fixed;
     top: 140px; left: 0; right: 0;
