@@ -1208,11 +1208,11 @@ select.form-control {
 
 @media (max-width: 768px) {
   .announcement-bar { font-size: 0.82rem; padding: 0.6rem 2.5rem 0.6rem 1rem; }
-  .nav-logo img { height: 70px; }
-  .nav-container { height: 85px; }
+  .nav-logo img { height: 350px; }
+  .nav-container { height: 140px; }
   .nav-links {
     position: fixed;
-    top: 85px; left: 0; right: 0;
+    top: 140px; left: 0; right: 0;
     background: var(--bg-white);
     flex-direction: column;
     padding: 1.5rem;
