@@ -72,24 +72,18 @@
 
       <!-- Google Calendar -->
       <div class="booking-panel" id="panel-google-calendar">
-        <div class="gcal-login-box" id="gcal-login-box">
-          <i class="fab fa-google"></i>
-          <h3>Book via Google Calendar</h3>
-          <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Sign in with your Google account to view available slots and book directly on our calendar.</p>
-          <button class="btn btn-primary btn-lg" id="gcal-login-btn"><i class="fab fa-google"></i> Sign In with Google</button>
-          <p style="margin-top: 1rem; font-size: 0.8rem; color: var(--text-light);">We only access your calendar to create the appointment. We never read or store your data.</p>
-        </div>
-        <div id="gcal-calendar-view" style="display: none;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-            <h3 style="margin: 0;">Select a Date &amp; Time</h3>
-            <button class="btn btn-sm btn-outline" id="gcal-logout-btn"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
-          </div>
-          <div class="gcal-event-form">
-            <h4 style="margin-bottom: 1.5rem;">Book Your Appointment</h4>
+        <div style="max-width: 700px; margin: 0 auto;">
+          <div class="card" style="padding: 3rem;">
+            <h3 style="margin-bottom: 0.5rem;"><i class="fas fa-calendar-plus" style="color: var(--plum); margin-right: 0.5rem;"></i> Book an Appointment</h3>
+            <p style="color: var(--text-muted); margin-bottom: 2rem;">Fill out the form below and it will be added directly to our calendar. You'll receive a confirmation email with the appointment details.</p>
             <form id="gcal-booking-form">
               <div class="form-row">
                 <div class="form-group"><label>Your Name <span class="required">*</span></label><input type="text" class="form-control" id="gcal-name" required placeholder="Full name"></div>
                 <div class="form-group"><label>Email <span class="required">*</span></label><input type="email" class="form-control" id="gcal-email" required placeholder="your@email.com"></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label>Phone</label><input type="tel" class="form-control" id="gcal-phone" placeholder="(786) 479-3593"></div>
+                <div class="form-group"><label>Service Type</label><select class="form-control" id="gcal-service"></select></div>
               </div>
               <div class="form-row">
                 <div class="form-group"><label>Preferred Date <span class="required">*</span></label><input type="date" class="form-control" id="gcal-date" required></div>
@@ -107,9 +101,8 @@
                   </select>
                 </div>
               </div>
-              <div class="form-group"><label>Service Type</label><select class="form-control" id="gcal-service"></select></div>
-              <div class="form-group"><label>Notes (optional)</label><textarea class="form-control" id="gcal-notes" rows="3" placeholder="Any details about your appointment..."></textarea></div>
-              <button type="submit" class="btn btn-primary btn-block btn-lg"><i class="fas fa-calendar-plus"></i> Create Appointment</button>
+              <div class="form-group"><label>Notes (optional)</label><textarea class="form-control" id="gcal-notes" rows="3" placeholder="Tell us about your child and what you're looking for..."></textarea></div>
+              <button type="submit" class="btn btn-primary btn-block btn-lg" id="gcal-submit-btn"><i class="fas fa-calendar-plus"></i> Book Appointment</button>
             </form>
           </div>
         </div>
