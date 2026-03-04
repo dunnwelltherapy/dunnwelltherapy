@@ -619,9 +619,13 @@ p  { margin-bottom: 1rem; }
 }
 
 /* === VIDEO TESTIMONIAL === */
+.video-testimonials-row {
+  max-width: 1100px;
+  margin: 0 auto;
+}
 .video-testimonial {
   max-width: 700px;
-  margin: 2.5rem auto 0;
+  margin: 0 auto;
   border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: var(--shadow-lg);
@@ -1233,6 +1237,7 @@ select.form-control {
   .hero { min-height: auto; padding: 8rem 1.5rem 6rem; }
   .hero h1 { font-size: 2.4rem; }
   .services-grid, .blog-grid, .testimonials-grid { grid-template-columns: 1fr; }
+  .video-testimonials-row { grid-template-columns: 1fr !important; }
   .features-row { grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: -2rem; }
   .process-grid { grid-template-columns: 1fr; gap: 2.5rem; }
   .form-row { grid-template-columns: 1fr; }
