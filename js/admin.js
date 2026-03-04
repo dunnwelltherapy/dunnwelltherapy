@@ -1112,11 +1112,12 @@
     container.innerHTML = '<div class="admin-loading"><div class="admin-spinner"></div></div>';
 
     try {
-      const snap = await db.collection('patients').orderBy('lastName', 'asc').get();
+      const snap = await db.collection('patients').get();
       patientsCache = [];
       snap.forEach(doc => {
         patientsCache.push({ id: doc.id, ...doc.data() });
       });
+      patientsCache.sort((a, b) => (a.lastName || '').localeCompare(b.lastName || ''));
       renderPatients();
     } catch (e) {
       container.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>' + escapeHtml(e.message) + '</p></div>';
@@ -1295,7 +1296,6 @@
     try {
       const snap = await db.collection('clinicalNotes')
         .where('patientId', '==', patientId)
-        .orderBy('sessionDate', 'desc')
         .get();
 
       if (snap.empty) {
@@ -1303,9 +1303,13 @@
         return;
       }
 
+      // Sort client-side to avoid needing a composite index
+      const notes = [];
+      snap.forEach(doc => { notes.push({ id: doc.id, ...doc.data() }); });
+      notes.sort((a, b) => (b.sessionDate || '').localeCompare(a.sessionDate || ''));
+
       container.innerHTML = '';
-      snap.forEach(doc => {
-        const d = doc.data();
+      notes.forEach(d => {
         const dateStr = d.sessionDate ? new Date(d.sessionDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) : 'No date';
         const preview = d.noteType === 'SOAP'
           ? truncate((d.subjective || '') + ' ' + (d.objective || ''), 100)
@@ -1313,7 +1317,7 @@
 
         const card = document.createElement('div');
         card.className = 'note-card';
-        card.onclick = () => adminPanel.editNote(doc.id);
+        card.onclick = () => adminPanel.editNote(d.id);
         card.innerHTML = `
           <div class="note-card-header">
             <span class="note-date">${dateStr}${d.duration ? ' &mdash; ' + escapeHtml(d.duration) : ''}</span>
