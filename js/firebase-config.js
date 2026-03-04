@@ -14,10 +14,10 @@
  */
 
 const FIREBASE_CONFIG = {
-  apiKey: "",
-  authDomain: "",
-  projectId: "",
-  storageBucket: "",
-  messagingSenderId: "",
-  appId: ""
+  apiKey: "AIzaSyBI-DVKipZJ38ZHiFRG3LvD0U4kAAcPa-g",
+  authDomain: "dunnwelltherapy.firebaseapp.com",
+  projectId: "dunnwelltherapy",
+  storageBucket: "dunnwelltherapy.firebasestorage.app",
+  messagingSenderId: "480058401087",
+  appId: "1:480058401087:web:af0f18df5300a8f2e6338a"
 };

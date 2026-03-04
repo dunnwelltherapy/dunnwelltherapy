@@ -17,6 +17,13 @@
   let quillEditor = null;
   let pendingDeleteFn = null;
 
+  // Clinical Notes state
+  let selectedPatientId = null;
+  let selectedPatientData = null;
+  let patientsCache = [];
+  let patientFilter = 'active';
+  let noteAutoSaveTimer = null;
+
   // ---- Init Firebase ----
   function initFirebase() {
     if (!FIREBASE_CONFIG || !FIREBASE_CONFIG.apiKey) {
@@ -115,26 +122,30 @@
   function loadSectionData(section) {
     switch (section) {
       case 'dashboard': loadDashboard(); break;
+      case 'homepage': loadHomepage(); break;
       case 'blog': loadBlogPosts(); break;
       case 'testimonials': loadTestimonials(); break;
-      case 'services': loadServices(); break;
+      case 'services': loadServices(); loadServicesExtra(); break;
       case 'about': loadAbout(); break;
       case 'settings': loadSettings(); break;
       case 'images': loadImages(); break;
+      case 'notes': loadPatients(); break;
     }
   }
 
   // ---- Dashboard ----
   async function loadDashboard() {
     try {
-      const [blogSnap, testimSnap, servSnap] = await Promise.all([
+      const [blogSnap, testimSnap, servSnap, patientsSnap] = await Promise.all([
         db.collection('blogPosts').get(),
         db.collection('testimonials').get(),
-        db.collection('services').get()
+        db.collection('services').get(),
+        db.collection('patients').get()
       ]);
       document.getElementById('stat-posts').textContent = blogSnap.size;
       document.getElementById('stat-testimonials').textContent = testimSnap.size;
       document.getElementById('stat-services').textContent = servSnap.size;
+      document.getElementById('stat-patients').textContent = patientsSnap.size;
 
       // Count images
       try {
@@ -481,6 +492,73 @@
       .filter(v => v);
   }
 
+  // ---- Dynamic List Editors (reusable) ----
+  function populateListEditor(containerId, items) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.innerHTML = '';
+    (items && items.length > 0 ? items : ['']).forEach(item => addListRow(containerId, item));
+  }
+
+  function addListRow(containerId, value) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const row = document.createElement('div');
+    row.className = 'feature-row';
+    row.innerHTML = `
+      <input type="text" class="form-control" value="${escapeHtml(value || '')}" placeholder="Enter item...">
+      <button type="button" title="Remove"><i class="fas fa-times"></i></button>`;
+    row.querySelector('button').addEventListener('click', () => row.remove());
+    container.appendChild(row);
+  }
+
+  function getListValues(containerId) {
+    return Array.from(document.querySelectorAll('#' + containerId + ' .feature-row input'))
+      .map(input => input.value.trim())
+      .filter(v => v);
+  }
+
+  // ---- Service Location Editor ----
+  function populateServiceLocations(locations) {
+    const container = document.getElementById('service-locations-list');
+    if (!container) return;
+    container.innerHTML = '';
+    (locations || []).forEach(loc => addServiceLocationRow(loc));
+  }
+
+  function addServiceLocationRow(loc) {
+    const container = document.getElementById('service-locations-list');
+    if (!container) return;
+    const row = document.createElement('div');
+    row.style.cssText = 'padding:1rem;margin-bottom:0.75rem;border:1px solid #E8D8E8;border-radius:12px;background:#FDFAFE;';
+    row.innerHTML = `
+      <div class="form-row">
+        <div class="form-group">
+          <label>Location Type</label>
+          <input type="text" class="form-control svc-loc-type" value="${escapeHtml(loc ? loc.type || '' : '')}" placeholder="e.g., Virtual Services">
+        </div>
+        <div class="form-group">
+          <label>Icon (Font Awesome)</label>
+          <input type="text" class="form-control svc-loc-icon" value="${escapeHtml(loc ? loc.icon || '' : '')}" placeholder="e.g., fa-laptop-medical">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea class="form-control svc-loc-desc" rows="2" placeholder="Description...">${escapeHtml(loc ? loc.description || '' : '')}</textarea>
+      </div>
+      <button type="button" class="btn btn-sm btn-danger" style="margin-top:0.25rem;"><i class="fas fa-trash"></i> Remove</button>`;
+    row.querySelector('.btn-danger').addEventListener('click', () => row.remove());
+    container.appendChild(row);
+  }
+
+  function getServiceLocations() {
+    return Array.from(document.querySelectorAll('#service-locations-list > div')).map(row => ({
+      type: row.querySelector('.svc-loc-type').value.trim(),
+      icon: row.querySelector('.svc-loc-icon').value.trim(),
+      description: row.querySelector('.svc-loc-desc').value.trim(),
+    })).filter(loc => loc.type);
+  }
+
   async function saveService() {
     const docId = document.getElementById('service-edit-id').value;
     const title = document.getElementById('service-title').value.trim();
@@ -544,6 +622,69 @@
       }
     };
     showModal('confirm-modal');
+  }
+
+  // ---- Homepage Content ----
+  async function loadHomepage() {
+    try {
+      const doc = await db.collection('settings').doc('homepage').get();
+      const data = doc.exists ? doc.data() : {};
+
+      document.getElementById('homepage-subtitle').value = data.subtitle || SITE_CONFIG.subtitle || '';
+      document.getElementById('homepage-hero-tagline').value = data.heroTagline || SITE_CONFIG.heroTagline || '';
+      document.getElementById('homepage-hero-delivery').value = data.heroDelivery || SITE_CONFIG.heroDelivery || '';
+
+      populateListEditor('differentiators-list', data.differentiators || SITE_CONFIG.differentiators || []);
+      populateListEditor('who-we-help-list', data.whoWeHelp || SITE_CONFIG.whoWeHelp || []);
+    } catch (e) {
+      console.warn('Homepage load:', e.message);
+    }
+  }
+
+  async function saveHomepage() {
+    const data = {
+      subtitle: document.getElementById('homepage-subtitle').value.trim(),
+      heroTagline: document.getElementById('homepage-hero-tagline').value.trim(),
+      heroDelivery: document.getElementById('homepage-hero-delivery').value.trim(),
+      differentiators: getListValues('differentiators-list'),
+      whoWeHelp: getListValues('who-we-help-list'),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    try {
+      await db.collection('settings').doc('homepage').set(data);
+      showToast('Homepage content saved!', 'success');
+    } catch (e) {
+      showToast('Save failed: ' + e.message, 'error');
+    }
+  }
+
+  // ---- Services Page Extra Content ----
+  async function loadServicesExtra() {
+    try {
+      const doc = await db.collection('settings').doc('servicesPage').get();
+      const data = doc.exists ? doc.data() : {};
+
+      populateListEditor('approach-list', data.approach || SITE_CONFIG.approach || []);
+      populateListEditor('parent-expect-list', data.parentExpect || SITE_CONFIG.parentExpect || []);
+    } catch (e) {
+      console.warn('Services extra load:', e.message);
+    }
+  }
+
+  async function saveServicesExtra() {
+    const data = {
+      approach: getListValues('approach-list'),
+      parentExpect: getListValues('parent-expect-list'),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    try {
+      await db.collection('settings').doc('servicesPage').set(data);
+      showToast('Approach & expectations saved!', 'success');
+    } catch (e) {
+      showToast('Save failed: ' + e.message, 'error');
+    }
   }
 
   // ---- About / Bio ----
@@ -616,6 +757,8 @@
       const doc = await db.collection('settings').doc('general').get();
       const data = doc.exists ? doc.data() : SITE_CONFIG;
 
+      document.getElementById('settings-site-name').value = data.siteName || SITE_CONFIG.siteName || '';
+      document.getElementById('settings-tagline').value = data.tagline || SITE_CONFIG.tagline || '';
       document.getElementById('settings-phone').value = data.phone || '';
       document.getElementById('settings-fax').value = data.fax || '';
       document.getElementById('settings-email-primary').value = data.emailPrimary || '';
@@ -634,6 +777,12 @@
         const input = document.querySelector(`#hours-editor input[data-day="${h.day}"]`);
         if (input) input.value = h.time || '';
       });
+
+      // Service locations
+      populateServiceLocations(data.serviceLocations || SITE_CONFIG.serviceLocations || []);
+
+      // Service interests
+      populateListEditor('service-interests-list', data.serviceInterests || SITE_CONFIG.serviceInterests || []);
     } catch (e) {
       console.warn('Settings load:', e.message);
     }
@@ -647,6 +796,8 @@
     });
 
     const data = {
+      siteName: document.getElementById('settings-site-name').value.trim(),
+      tagline: document.getElementById('settings-tagline').value.trim(),
       phone: document.getElementById('settings-phone').value.trim(),
       fax: document.getElementById('settings-fax').value.trim(),
       emailPrimary: document.getElementById('settings-email-primary').value.trim(),
@@ -659,6 +810,8 @@
         linkedin: document.getElementById('settings-linkedin').value.trim(),
       },
       hours: hours,
+      serviceLocations: getServiceLocations(),
+      serviceInterests: getListValues('service-interests-list'),
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
 
@@ -744,7 +897,7 @@
     try {
       const batch = db.batch();
 
-      // Import settings
+      // Import settings (general)
       batch.set(db.collection('settings').doc('general'), {
         siteName: SITE_CONFIG.siteName,
         tagline: SITE_CONFIG.tagline,
@@ -756,12 +909,31 @@
         googleMapsEmbed: SITE_CONFIG.googleMapsEmbed,
         social: SITE_CONFIG.social,
         hours: SITE_CONFIG.hours,
+        serviceLocations: SITE_CONFIG.serviceLocations,
+        serviceInterests: SITE_CONFIG.serviceInterests,
         importedAt: firebase.firestore.FieldValue.serverTimestamp()
       });
 
       // Import about
       batch.set(db.collection('settings').doc('about'), {
         ...SITE_CONFIG.about,
+        importedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      // Import homepage content
+      batch.set(db.collection('settings').doc('homepage'), {
+        subtitle: SITE_CONFIG.subtitle,
+        heroTagline: SITE_CONFIG.heroTagline,
+        heroDelivery: SITE_CONFIG.heroDelivery,
+        differentiators: SITE_CONFIG.differentiators,
+        whoWeHelp: SITE_CONFIG.whoWeHelp,
+        importedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      // Import services page extras
+      batch.set(db.collection('settings').doc('servicesPage'), {
+        approach: SITE_CONFIG.approach,
+        parentExpect: SITE_CONFIG.parentExpect,
         importedAt: firebase.firestore.FieldValue.serverTimestamp()
       });
 
@@ -934,6 +1106,468 @@
     loadDashboard();
   }
 
+  // ---- Clinical Notes: Patients ----
+  async function loadPatients() {
+    const container = document.getElementById('patient-list');
+    container.innerHTML = '<div class="admin-loading"><div class="admin-spinner"></div></div>';
+
+    try {
+      const snap = await db.collection('patients').orderBy('lastName', 'asc').get();
+      patientsCache = [];
+      snap.forEach(doc => {
+        patientsCache.push({ id: doc.id, ...doc.data() });
+      });
+      renderPatients();
+    } catch (e) {
+      container.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>' + escapeHtml(e.message) + '</p></div>';
+    }
+  }
+
+  function renderPatients() {
+    const container = document.getElementById('patient-list');
+    const search = (document.getElementById('patient-search').value || '').toLowerCase();
+
+    let list = patientsCache;
+
+    // Filter by status
+    if (patientFilter !== 'all') {
+      list = list.filter(p => p.status === patientFilter);
+    }
+
+    // Filter by search
+    if (search) {
+      list = list.filter(p =>
+        (p.firstName || '').toLowerCase().includes(search) ||
+        (p.lastName || '').toLowerCase().includes(search) ||
+        (p.guardianName || '').toLowerCase().includes(search)
+      );
+    }
+
+    if (list.length === 0) {
+      container.innerHTML = '<div class="empty-state" style="padding:2rem 1rem;"><i class="fas fa-user" style="font-size:2rem;"></i><p style="font-size:0.85rem;">No patients found.</p></div>';
+      return;
+    }
+
+    container.innerHTML = list.map(p => `
+      <div class="notes-patient-item ${p.id === selectedPatientId ? 'active' : ''}" onclick="adminPanel.selectPatient('${p.id}')">
+        <h4>${escapeHtml(p.lastName || '')}, ${escapeHtml(p.firstName || '')}</h4>
+        <p>${p.diagnosis ? escapeHtml(truncate(p.diagnosis, 40)) : 'No diagnosis listed'}
+          <span class="patient-status ${p.status || 'active'}">${p.status || 'active'}</span>
+        </p>
+      </div>
+    `).join('');
+  }
+
+  function openPatientModal(data) {
+    document.getElementById('patient-modal-title').textContent = data ? 'Edit Patient' : 'New Patient';
+    document.getElementById('patient-edit-id').value = data ? data._docId : '';
+    document.getElementById('patient-first-name').value = data ? data.firstName : '';
+    document.getElementById('patient-last-name').value = data ? data.lastName : '';
+    document.getElementById('patient-dob').value = data ? data.dateOfBirth : '';
+    document.getElementById('patient-guardian').value = data ? data.guardianName : '';
+    document.getElementById('patient-phone').value = data ? data.phone : '';
+    document.getElementById('patient-email').value = data ? data.email : '';
+    document.getElementById('patient-diagnosis').value = data ? data.diagnosis : '';
+    document.getElementById('patient-status').value = data ? (data.status || 'active') : 'active';
+    showModal('patient-modal');
+  }
+
+  async function savePatient() {
+    const docId = document.getElementById('patient-edit-id').value;
+    const firstName = document.getElementById('patient-first-name').value.trim();
+    const lastName = document.getElementById('patient-last-name').value.trim();
+
+    if (!firstName || !lastName) {
+      showToast('First and last name are required.', 'error');
+      return;
+    }
+
+    const data = {
+      firstName: firstName,
+      lastName: lastName,
+      dateOfBirth: document.getElementById('patient-dob').value || '',
+      guardianName: document.getElementById('patient-guardian').value.trim(),
+      phone: document.getElementById('patient-phone').value.trim(),
+      email: document.getElementById('patient-email').value.trim(),
+      diagnosis: document.getElementById('patient-diagnosis').value.trim(),
+      status: document.getElementById('patient-status').value,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    try {
+      if (docId) {
+        await db.collection('patients').doc(docId).update(data);
+      } else {
+        data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+        await db.collection('patients').add(data);
+      }
+      showToast('Patient saved!', 'success');
+      closeModal('patient-modal');
+      loadPatients();
+      loadDashboard();
+    } catch (e) {
+      showToast('Save failed: ' + e.message, 'error');
+    }
+  }
+
+  async function editPatient(docId) {
+    try {
+      const doc = await db.collection('patients').doc(docId).get();
+      if (doc.exists) {
+        const data = doc.data();
+        data._docId = doc.id;
+        openPatientModal(data);
+      }
+    } catch (e) {
+      showToast('Error loading patient: ' + e.message, 'error');
+    }
+  }
+
+  function deletePatient(docId) {
+    pendingDeleteFn = async () => {
+      try {
+        // Delete all notes for this patient
+        const notesSnap = await db.collection('clinicalNotes').where('patientId', '==', docId).get();
+        const batch = db.batch();
+        notesSnap.forEach(doc => batch.delete(doc.ref));
+        batch.delete(db.collection('patients').doc(docId));
+        await batch.commit();
+
+        showToast('Patient and notes deleted.', 'success');
+        if (selectedPatientId === docId) {
+          selectedPatientId = null;
+          selectedPatientData = null;
+          document.getElementById('notes-content').style.display = 'none';
+          document.getElementById('notes-empty').style.display = 'flex';
+        }
+        loadPatients();
+        loadDashboard();
+      } catch (e) {
+        showToast('Delete failed: ' + e.message, 'error');
+      }
+    };
+    document.getElementById('confirm-message').textContent = 'Delete this patient and all their notes? This cannot be undone.';
+    showModal('confirm-modal');
+  }
+
+  async function selectPatient(docId) {
+    selectedPatientId = docId;
+
+    // Find patient data from cache
+    selectedPatientData = patientsCache.find(p => p.id === docId);
+    if (!selectedPatientData) return;
+
+    // Update sidebar selection
+    renderPatients();
+
+    // Show notes content area
+    document.getElementById('notes-empty').style.display = 'none';
+    document.getElementById('notes-content').style.display = 'block';
+
+    // Render patient header
+    const header = document.getElementById('notes-patient-header');
+    const p = selectedPatientData;
+    const details = [
+      p.dateOfBirth ? 'DOB: ' + p.dateOfBirth : '',
+      p.guardianName ? 'Guardian: ' + p.guardianName : '',
+      p.diagnosis ? p.diagnosis : ''
+    ].filter(Boolean).join(' &bull; ');
+
+    header.innerHTML = `
+      <div class="patient-info">
+        <h3>${escapeHtml(p.firstName || '')} ${escapeHtml(p.lastName || '')}</h3>
+        <p>${details || 'No additional details'}</p>
+      </div>
+      <div class="patient-actions">
+        <button class="btn btn-sm btn-outline" onclick="adminPanel.editPatient('${docId}')"><i class="fas fa-pen"></i> Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="adminPanel.deletePatient('${docId}')"><i class="fas fa-trash"></i></button>
+      </div>`;
+
+    // Load notes for this patient
+    loadNotes(docId);
+  }
+
+  // ---- Clinical Notes: Notes ----
+  async function loadNotes(patientId) {
+    const container = document.getElementById('notes-list');
+    container.innerHTML = '<div class="admin-loading"><div class="admin-spinner"></div></div>';
+
+    try {
+      const snap = await db.collection('clinicalNotes')
+        .where('patientId', '==', patientId)
+        .orderBy('sessionDate', 'desc')
+        .get();
+
+      if (snap.empty) {
+        container.innerHTML = '<div class="empty-state" style="padding:2rem;"><i class="fas fa-file-medical" style="font-size:2rem;"></i><h4>No notes yet</h4><p>Create a session note for this patient.</p></div>';
+        return;
+      }
+
+      container.innerHTML = '';
+      snap.forEach(doc => {
+        const d = doc.data();
+        const dateStr = d.sessionDate ? new Date(d.sessionDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) : 'No date';
+        const preview = d.noteType === 'SOAP'
+          ? truncate((d.subjective || '') + ' ' + (d.objective || ''), 100)
+          : truncate(d.narrative || '', 100);
+
+        const card = document.createElement('div');
+        card.className = 'note-card';
+        card.onclick = () => adminPanel.editNote(doc.id);
+        card.innerHTML = `
+          <div class="note-card-header">
+            <span class="note-date">${dateStr}${d.duration ? ' &mdash; ' + escapeHtml(d.duration) : ''}</span>
+            <div class="note-meta">
+              <span class="note-type-badge">${escapeHtml(d.noteType || 'SOAP')}</span>
+              <span class="note-status-badge ${d.status || 'draft'}">${d.status || 'draft'}</span>
+            </div>
+          </div>
+          <div class="note-preview">${escapeHtml(preview || 'Empty note')}</div>`;
+        container.appendChild(card);
+      });
+    } catch (e) {
+      container.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>' + escapeHtml(e.message) + '</p></div>';
+    }
+  }
+
+  function openNoteModal(data) {
+    document.getElementById('note-modal-title').textContent = data ? 'Edit Note' : 'New Note';
+    document.getElementById('note-edit-id').value = data ? data._docId : '';
+    document.getElementById('note-patient-id').value = data ? data.patientId : selectedPatientId;
+    document.getElementById('note-session-date').value = data ? data.sessionDate : new Date().toISOString().split('T')[0];
+    document.getElementById('note-duration').value = data ? (data.duration || '') : '';
+    document.getElementById('note-subjective').value = data ? (data.subjective || '') : '';
+    document.getElementById('note-objective').value = data ? (data.objective || '') : '';
+    document.getElementById('note-assessment').value = data ? (data.assessment || '') : '';
+    document.getElementById('note-plan').value = data ? (data.plan || '') : '';
+    document.getElementById('note-narrative').value = data ? (data.narrative || '') : '';
+
+    // Set note type
+    const noteType = data ? (data.noteType || 'SOAP') : 'SOAP';
+    setNoteType(noteType);
+
+    // Update finalize button
+    const finalizeBtn = document.getElementById('finalize-note-btn');
+    const isFinal = data && data.status === 'final';
+    finalizeBtn.textContent = isFinal ? ' Finalized' : ' Mark as Final';
+    finalizeBtn.innerHTML = isFinal
+      ? '<i class="fas fa-lock"></i> Finalized'
+      : '<i class="fas fa-check-circle"></i> Mark as Final';
+    finalizeBtn.disabled = isFinal;
+
+    // Show/hide delete button
+    document.getElementById('delete-note-btn').style.display = data ? '' : 'none';
+
+    // Clear save indicator
+    updateSaveIndicator('');
+
+    showModal('note-modal');
+
+    // Setup autosave listeners
+    setupNoteAutoSave();
+  }
+
+  function setNoteType(type) {
+    document.querySelectorAll('#note-type-selector .btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.noteType === type);
+    });
+    document.getElementById('soap-fields').style.display = type === 'SOAP' ? 'block' : 'none';
+    document.getElementById('narrative-fields').style.display = type !== 'SOAP' ? 'block' : 'none';
+  }
+
+  function getSelectedNoteType() {
+    const activeBtn = document.querySelector('#note-type-selector .btn.active');
+    return activeBtn ? activeBtn.dataset.noteType : 'SOAP';
+  }
+
+  function getNoteData() {
+    return {
+      patientId: document.getElementById('note-patient-id').value,
+      sessionDate: document.getElementById('note-session-date').value,
+      noteType: getSelectedNoteType(),
+      subjective: document.getElementById('note-subjective').value.trim(),
+      objective: document.getElementById('note-objective').value.trim(),
+      assessment: document.getElementById('note-assessment').value.trim(),
+      plan: document.getElementById('note-plan').value.trim(),
+      narrative: document.getElementById('note-narrative').value.trim(),
+      duration: document.getElementById('note-duration').value.trim(),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+  }
+
+  async function saveNote() {
+    const docId = document.getElementById('note-edit-id').value;
+    const data = getNoteData();
+
+    if (!data.sessionDate) {
+      showToast('Session date is required.', 'error');
+      return;
+    }
+
+    try {
+      if (docId) {
+        await db.collection('clinicalNotes').doc(docId).update(data);
+      } else {
+        data.status = 'draft';
+        data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+        const ref = await db.collection('clinicalNotes').add(data);
+        document.getElementById('note-edit-id').value = ref.id;
+      }
+      updateSaveIndicator('saved');
+      showToast('Note saved!', 'success');
+    } catch (e) {
+      updateSaveIndicator('error');
+      showToast('Save failed: ' + e.message, 'error');
+    }
+  }
+
+  function setupNoteAutoSave() {
+    // Remove existing listeners by cloning (to avoid duplicates)
+    document.querySelectorAll('.note-autosave').forEach(el => {
+      el.addEventListener('input', handleNoteInput);
+    });
+    // Also autosave on date/duration changes
+    document.getElementById('note-session-date').addEventListener('change', handleNoteInput);
+    document.getElementById('note-duration').addEventListener('input', handleNoteInput);
+  }
+
+  function handleNoteInput() {
+    clearTimeout(noteAutoSaveTimer);
+    updateSaveIndicator('saving');
+    noteAutoSaveTimer = setTimeout(autoSaveNote, 2000);
+  }
+
+  async function autoSaveNote() {
+    const docId = document.getElementById('note-edit-id').value;
+    const data = getNoteData();
+
+    if (!data.sessionDate || !data.patientId) return;
+
+    try {
+      if (docId) {
+        await db.collection('clinicalNotes').doc(docId).update(data);
+      } else {
+        data.status = 'draft';
+        data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+        const ref = await db.collection('clinicalNotes').add(data);
+        document.getElementById('note-edit-id').value = ref.id;
+      }
+      updateSaveIndicator('saved');
+    } catch (e) {
+      updateSaveIndicator('error');
+    }
+  }
+
+  function updateSaveIndicator(state) {
+    const el = document.getElementById('note-save-indicator');
+    el.className = 'save-indicator';
+    if (state === 'saving') {
+      el.className = 'save-indicator saving';
+      el.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Saving...';
+    } else if (state === 'saved') {
+      el.className = 'save-indicator saved';
+      el.innerHTML = '<i class="fas fa-check-circle"></i> Saved';
+    } else if (state === 'error') {
+      el.className = 'save-indicator error';
+      el.innerHTML = '<i class="fas fa-exclamation-circle"></i> Error';
+    } else {
+      el.innerHTML = '';
+    }
+  }
+
+  async function editNote(docId) {
+    try {
+      const doc = await db.collection('clinicalNotes').doc(docId).get();
+      if (doc.exists) {
+        const data = doc.data();
+        data._docId = doc.id;
+        openNoteModal(data);
+      }
+    } catch (e) {
+      showToast('Error loading note: ' + e.message, 'error');
+    }
+  }
+
+  function deleteNote(docId) {
+    if (!docId) {
+      closeModal('note-modal');
+      return;
+    }
+    pendingDeleteFn = async () => {
+      try {
+        await db.collection('clinicalNotes').doc(docId).delete();
+        showToast('Note deleted.', 'success');
+        closeModal('note-modal');
+        if (selectedPatientId) loadNotes(selectedPatientId);
+      } catch (e) {
+        showToast('Delete failed: ' + e.message, 'error');
+      }
+    };
+    document.getElementById('confirm-message').textContent = 'Delete this clinical note? This cannot be undone.';
+    showModal('confirm-modal');
+  }
+
+  async function markNoteFinal() {
+    const docId = document.getElementById('note-edit-id').value;
+    if (!docId) {
+      // Save first if new note
+      await saveNote();
+      const newDocId = document.getElementById('note-edit-id').value;
+      if (!newDocId) return;
+      await db.collection('clinicalNotes').doc(newDocId).update({ status: 'final' });
+    } else {
+      // Save current state then finalize
+      const data = getNoteData();
+      data.status = 'final';
+      await db.collection('clinicalNotes').doc(docId).update(data);
+    }
+
+    showToast('Note marked as final.', 'success');
+    const finalizeBtn = document.getElementById('finalize-note-btn');
+    finalizeBtn.innerHTML = '<i class="fas fa-lock"></i> Finalized';
+    finalizeBtn.disabled = true;
+
+    if (selectedPatientId) loadNotes(selectedPatientId);
+  }
+
+  function emailNote() {
+    const patientName = selectedPatientData
+      ? (selectedPatientData.firstName + ' ' + selectedPatientData.lastName)
+      : 'Patient';
+    const sessionDate = document.getElementById('note-session-date').value || 'No date';
+    const noteType = getSelectedNoteType();
+
+    const subject = encodeURIComponent('Clinical Note - ' + patientName + ' - ' + sessionDate);
+    let body = '';
+
+    if (noteType === 'SOAP') {
+      const s = document.getElementById('note-subjective').value.trim();
+      const o = document.getElementById('note-objective').value.trim();
+      const a = document.getElementById('note-assessment').value.trim();
+      const p = document.getElementById('note-plan').value.trim();
+
+      body = 'CLINICAL NOTE\n'
+        + 'Patient: ' + patientName + '\n'
+        + 'Date: ' + sessionDate + '\n'
+        + 'Duration: ' + (document.getElementById('note-duration').value.trim() || 'N/A') + '\n'
+        + 'Type: SOAP\n\n'
+        + '--- SUBJECTIVE ---\n' + (s || 'N/A') + '\n\n'
+        + '--- OBJECTIVE ---\n' + (o || 'N/A') + '\n\n'
+        + '--- ASSESSMENT ---\n' + (a || 'N/A') + '\n\n'
+        + '--- PLAN ---\n' + (p || 'N/A') + '\n';
+    } else {
+      const n = document.getElementById('note-narrative').value.trim();
+      body = 'CLINICAL NOTE\n'
+        + 'Patient: ' + patientName + '\n'
+        + 'Date: ' + sessionDate + '\n'
+        + 'Duration: ' + (document.getElementById('note-duration').value.trim() || 'N/A') + '\n'
+        + 'Type: ' + noteType + '\n\n'
+        + (n || 'N/A') + '\n';
+    }
+
+    window.location.href = 'mailto:?subject=' + subject + '&body=' + encodeURIComponent(body);
+  }
+
   // ---- Utilities ----
   function escapeHtml(str) {
     const div = document.createElement('div');
@@ -961,6 +1595,62 @@
     document.getElementById('save-about-btn').addEventListener('click', saveAbout);
     document.getElementById('save-settings-btn').addEventListener('click', saveSettings);
     document.getElementById('import-config-btn').addEventListener('click', importFromConfig);
+
+    // Homepage
+    document.getElementById('save-homepage-btn').addEventListener('click', saveHomepage);
+    document.getElementById('add-differentiator-btn').addEventListener('click', () => addListRow('differentiators-list', ''));
+    document.getElementById('add-who-we-help-btn').addEventListener('click', () => addListRow('who-we-help-list', ''));
+
+    // Services page extras
+    document.getElementById('save-services-extra-btn').addEventListener('click', saveServicesExtra);
+    document.getElementById('add-approach-btn').addEventListener('click', () => addListRow('approach-list', ''));
+    document.getElementById('add-parent-expect-btn').addEventListener('click', () => addListRow('parent-expect-list', ''));
+
+    // Settings extras
+    document.getElementById('add-service-location-btn').addEventListener('click', () => addServiceLocationRow(null));
+    document.getElementById('add-service-interest-btn').addEventListener('click', () => addListRow('service-interests-list', ''));
+
+    // Clinical Notes
+    document.getElementById('add-patient-btn').addEventListener('click', () => openPatientModal(null));
+    document.getElementById('save-patient-btn').addEventListener('click', savePatient);
+    document.getElementById('add-note-btn').addEventListener('click', () => openNoteModal(null));
+    document.getElementById('save-note-btn').addEventListener('click', saveNote);
+    document.getElementById('delete-note-btn').addEventListener('click', () => {
+      deleteNote(document.getElementById('note-edit-id').value);
+    });
+    document.getElementById('finalize-note-btn').addEventListener('click', markNoteFinal);
+    document.getElementById('email-note-btn').addEventListener('click', emailNote);
+
+    // Patient search
+    document.getElementById('patient-search').addEventListener('input', renderPatients);
+
+    // Patient filter buttons
+    document.querySelectorAll('[data-patient-filter]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-patient-filter]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        patientFilter = btn.dataset.patientFilter;
+        renderPatients();
+      });
+    });
+
+    // Note type selector
+    document.querySelectorAll('#note-type-selector .btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        setNoteType(btn.dataset.noteType);
+        handleNoteInput();
+      });
+    });
+
+    // Close note modal → refresh notes list
+    const noteModalOverlay = document.getElementById('note-modal');
+    const origCloseHandler = noteModalOverlay.querySelector('[data-close-modal="note-modal"]');
+    if (origCloseHandler) {
+      origCloseHandler.addEventListener('click', () => {
+        clearTimeout(noteAutoSaveTimer);
+        if (selectedPatientId) loadNotes(selectedPatientId);
+      });
+    }
   }
 
   // ---- Boot ----
@@ -982,7 +1672,13 @@
     editService,
     deleteService,
     copyImageUrl,
-    deleteImage
+    deleteImage,
+    selectPatient,
+    editPatient,
+    deletePatient,
+    editNote,
+    deleteNote,
+    emailNote
   };
 
 })();

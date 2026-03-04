@@ -49,12 +49,14 @@
       </div>
       <nav class="sidebar-nav">
         <a href="#" data-section="dashboard" class="active"><i class="fas fa-th-large"></i> Dashboard</a>
+        <a href="#" data-section="homepage"><i class="fas fa-home"></i> Homepage</a>
         <a href="#" data-section="blog"><i class="fas fa-newspaper"></i> Blog Posts</a>
         <a href="#" data-section="testimonials"><i class="fas fa-quote-right"></i> Testimonials</a>
         <a href="#" data-section="services"><i class="fas fa-hand-holding-medical"></i> Services</a>
         <a href="#" data-section="about"><i class="fas fa-user"></i> About / Bio</a>
         <a href="#" data-section="settings"><i class="fas fa-cog"></i> Site Settings</a>
         <a href="#" data-section="images"><i class="fas fa-images"></i> Image Library</a>
+        <a href="#" data-section="notes"><i class="fas fa-notes-medical"></i> Clinical Notes</a>
       </nav>
       <div class="sidebar-footer">
         <a href="index.html" target="_blank"><i class="fas fa-external-link-alt"></i> View Live Site</a>
@@ -90,11 +92,52 @@
             <div class="stat-icon"><i class="fas fa-images"></i></div>
             <div class="stat-info"><h4 id="stat-images">0</h4><p>Images</p></div>
           </div>
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-user-injured"></i></div>
+            <div class="stat-info"><h4 id="stat-patients">0</h4><p>Patients</p></div>
+          </div>
         </div>
         <div class="admin-card">
           <h3>Quick Start</h3>
           <p style="color:#7A6A7B; font-size:0.9rem; margin-bottom:1rem;">First time? Click <strong>"Import from Config"</strong> above to seed your existing content from config.js into Firebase. After that, manage everything from this dashboard.</p>
           <p style="color:#7A6A7B; font-size:0.9rem;">Changes made here are saved to Firebase and appear on the live site immediately.</p>
+        </div>
+      </section>
+
+      <!-- ====== HOMEPAGE ====== -->
+      <section class="admin-section" id="section-homepage">
+        <div class="admin-header">
+          <h2>Homepage Content</h2>
+          <div class="admin-header-actions">
+            <button class="btn btn-primary" id="save-homepage-btn"><i class="fas fa-save"></i> Save Changes</button>
+          </div>
+        </div>
+        <div class="admin-card">
+          <h3>Hero Section</h3>
+          <div class="form-group">
+            <label>Subtitle</label>
+            <input type="text" class="form-control" id="homepage-subtitle" placeholder="Supporting Regulation, Independence & Everyday Success">
+          </div>
+          <div class="form-group">
+            <label>Tagline</label>
+            <input type="text" class="form-control" id="homepage-hero-tagline" placeholder="Personalized Occupational Therapy for Children, Teens & Families">
+          </div>
+          <div class="form-group">
+            <label>Delivery Methods</label>
+            <input type="text" class="form-control" id="homepage-hero-delivery" placeholder="In-home • Virtual • School & IEP Consulting">
+          </div>
+        </div>
+        <div class="admin-card">
+          <h3>What Makes DunnWell Different</h3>
+          <p style="color:#7A6A7B;font-size:0.85rem;margin-bottom:1rem;">Checklist items shown on the homepage</p>
+          <div id="differentiators-list"></div>
+          <button class="btn btn-sm btn-secondary" id="add-differentiator-btn" style="margin-top:0.5rem;"><i class="fas fa-plus"></i> Add Item</button>
+        </div>
+        <div class="admin-card">
+          <h3>Who We Help</h3>
+          <p style="color:#7A6A7B;font-size:0.85rem;margin-bottom:1rem;">Conditions and needs we address</p>
+          <div id="who-we-help-list"></div>
+          <button class="btn btn-sm btn-secondary" id="add-who-we-help-btn" style="margin-top:0.5rem;"><i class="fas fa-plus"></i> Add Item</button>
         </div>
       </section>
 
@@ -134,6 +177,21 @@
         </div>
         <div class="admin-card">
           <div id="services-list"></div>
+        </div>
+        <div class="admin-card" style="margin-top:1.5rem;">
+          <h3>Our Approach</h3>
+          <p style="color:#7A6A7B;font-size:0.85rem;margin-bottom:1rem;">Evidence-based practices listed on the services page</p>
+          <div id="approach-list"></div>
+          <button class="btn btn-sm btn-secondary" id="add-approach-btn" style="margin-top:0.5rem;"><i class="fas fa-plus"></i> Add Item</button>
+        </div>
+        <div class="admin-card">
+          <h3>What Parents Can Expect</h3>
+          <p style="color:#7A6A7B;font-size:0.85rem;margin-bottom:1rem;">Checklist shown on the services page</p>
+          <div id="parent-expect-list"></div>
+          <button class="btn btn-sm btn-secondary" id="add-parent-expect-btn" style="margin-top:0.5rem;"><i class="fas fa-plus"></i> Add Item</button>
+        </div>
+        <div style="margin-top:1.5rem;text-align:right;">
+          <button class="btn btn-primary" id="save-services-extra-btn"><i class="fas fa-save"></i> Save Approach & Expectations</button>
         </div>
       </section>
 
@@ -227,6 +285,19 @@
           </div>
         </div>
         <div class="admin-card">
+          <h3>Site Branding</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Site Name</label>
+              <input type="text" class="form-control" id="settings-site-name" placeholder="DunnWell Therapy, LLC">
+            </div>
+            <div class="form-group">
+              <label>Tagline</label>
+              <input type="text" class="form-control" id="settings-tagline" placeholder="Therapy, Dunn Well.">
+            </div>
+          </div>
+        </div>
+        <div class="admin-card">
           <h3>Contact Information</h3>
           <div class="form-row">
             <div class="form-group">
@@ -284,6 +355,18 @@
             <div class="hours-row"><label>Sunday</label><input type="text" class="form-control" data-day="Sunday" placeholder="Closed"></div>
           </div>
         </div>
+        <div class="admin-card">
+          <h3>Service Locations</h3>
+          <p style="color:#7A6A7B;font-size:0.85rem;margin-bottom:1rem;">Where your services are available</p>
+          <div id="service-locations-list"></div>
+          <button class="btn btn-sm btn-secondary" id="add-service-location-btn" style="margin-top:0.5rem;"><i class="fas fa-plus"></i> Add Location</button>
+        </div>
+        <div class="admin-card">
+          <h3>Service Interest Options</h3>
+          <p style="color:#7A6A7B;font-size:0.85rem;margin-bottom:1rem;">Dropdown options for contact and booking forms</p>
+          <div id="service-interests-list"></div>
+          <button class="btn btn-sm btn-secondary" id="add-service-interest-btn" style="margin-top:0.5rem;"><i class="fas fa-plus"></i> Add Option</button>
+        </div>
       </section>
 
       <!-- ====== IMAGE LIBRARY ====== -->
@@ -302,6 +385,53 @@
           </div>
           <input type="file" id="library-file-input" accept="image/*" multiple style="display:none;">
           <div class="image-grid" id="image-library-grid" style="margin-top:1.5rem;"></div>
+        </div>
+      </section>
+
+      <!-- ====== CLINICAL NOTES ====== -->
+      <section class="admin-section" id="section-notes">
+        <div class="admin-header">
+          <h2>Clinical Notes</h2>
+          <div class="admin-header-actions">
+            <button class="btn btn-primary" id="add-patient-btn">
+              <i class="fas fa-user-plus"></i> New Patient
+            </button>
+          </div>
+        </div>
+
+        <div class="notes-layout">
+          <!-- Patient Sidebar -->
+          <div class="notes-patient-sidebar">
+            <div class="notes-search">
+              <input type="text" id="patient-search" placeholder="Search patients...">
+            </div>
+            <div class="notes-patient-filter">
+              <button class="btn active" data-patient-filter="active">Active</button>
+              <button class="btn" data-patient-filter="discharged">Discharged</button>
+              <button class="btn" data-patient-filter="all">All</button>
+            </div>
+            <div id="patient-list"></div>
+          </div>
+
+          <!-- Notes Area -->
+          <div class="notes-main" id="notes-main">
+            <div class="notes-empty-state" id="notes-empty">
+              <i class="fas fa-notes-medical"></i>
+              <h4>Select a patient</h4>
+              <p>Choose a patient from the left to view or create notes.</p>
+            </div>
+
+            <div id="notes-content" style="display:none;">
+              <div class="notes-patient-header" id="notes-patient-header"></div>
+              <div class="notes-list-header">
+                <h3>Session Notes</h3>
+                <button class="btn btn-primary btn-sm" id="add-note-btn">
+                  <i class="fas fa-plus"></i> New Note
+                </button>
+              </div>
+              <div id="notes-list"></div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -453,6 +583,134 @@
       <div class="admin-modal-footer">
         <button class="btn btn-outline" data-close-modal="confirm-modal">Cancel</button>
         <button class="btn btn-danger" id="confirm-delete-btn"><i class="fas fa-trash"></i> Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== MODAL: PATIENT EDITOR ====== -->
+  <div class="admin-modal-overlay" id="patient-modal">
+    <div class="admin-modal" style="max-width:600px;">
+      <div class="admin-modal-header">
+        <h3 id="patient-modal-title">New Patient</h3>
+        <button class="admin-modal-close" data-close-modal="patient-modal">&times;</button>
+      </div>
+      <div class="admin-modal-body">
+        <input type="hidden" id="patient-edit-id">
+        <div class="form-row">
+          <div class="form-group">
+            <label>First Name <span class="required">*</span></label>
+            <input type="text" class="form-control" id="patient-first-name" placeholder="First name">
+          </div>
+          <div class="form-group">
+            <label>Last Name <span class="required">*</span></label>
+            <input type="text" class="form-control" id="patient-last-name" placeholder="Last name">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Date of Birth</label>
+            <input type="date" class="form-control" id="patient-dob">
+          </div>
+          <div class="form-group">
+            <label>Guardian Name</label>
+            <input type="text" class="form-control" id="patient-guardian" placeholder="Parent / guardian name">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Phone</label>
+            <input type="tel" class="form-control" id="patient-phone" placeholder="(555) 123-4567">
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" class="form-control" id="patient-email" placeholder="email@example.com">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Diagnosis</label>
+          <textarea class="form-control" id="patient-diagnosis" rows="2" placeholder="Primary diagnosis or referral reason..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select class="form-control" id="patient-status">
+            <option value="active">Active</option>
+            <option value="discharged">Discharged</option>
+          </select>
+        </div>
+      </div>
+      <div class="admin-modal-footer">
+        <button class="btn btn-outline" data-close-modal="patient-modal">Cancel</button>
+        <button class="btn btn-primary" id="save-patient-btn"><i class="fas fa-save"></i> Save Patient</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== MODAL: NOTE EDITOR ====== -->
+  <div class="admin-modal-overlay" id="note-modal">
+    <div class="admin-modal" style="max-width:800px;">
+      <div class="admin-modal-header">
+        <h3 id="note-modal-title">New Note</h3>
+        <div style="display:flex;align-items:center;gap:1rem;">
+          <span class="save-indicator" id="note-save-indicator"></span>
+          <button class="admin-modal-close" data-close-modal="note-modal">&times;</button>
+        </div>
+      </div>
+      <div class="admin-modal-body">
+        <input type="hidden" id="note-edit-id">
+        <input type="hidden" id="note-patient-id">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Session Date <span class="required">*</span></label>
+            <input type="date" class="form-control" id="note-session-date">
+          </div>
+          <div class="form-group">
+            <label>Duration</label>
+            <input type="text" class="form-control" id="note-duration" placeholder="e.g., 45 min">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Note Type</label>
+          <div class="note-type-selector" id="note-type-selector">
+            <button class="btn active" data-note-type="SOAP">SOAP</button>
+            <button class="btn" data-note-type="Narrative">Narrative</button>
+            <button class="btn" data-note-type="Progress">Progress</button>
+          </div>
+        </div>
+
+        <!-- SOAP Fields -->
+        <div id="soap-fields">
+          <div class="soap-section">
+            <span class="soap-label">S &mdash; Subjective</span>
+            <textarea class="soap-field note-autosave" id="note-subjective" placeholder="Patient/caregiver report, concerns, goals discussed..."></textarea>
+          </div>
+          <div class="soap-section">
+            <span class="soap-label">O &mdash; Objective</span>
+            <textarea class="soap-field note-autosave" id="note-objective" placeholder="Therapist observations, measurements, data collected..."></textarea>
+          </div>
+          <div class="soap-section">
+            <span class="soap-label">A &mdash; Assessment</span>
+            <textarea class="soap-field note-autosave" id="note-assessment" placeholder="Clinical reasoning, progress toward goals, interpretation..."></textarea>
+          </div>
+          <div class="soap-section">
+            <span class="soap-label">P &mdash; Plan</span>
+            <textarea class="soap-field note-autosave" id="note-plan" placeholder="Next steps, recommendations, home program updates..."></textarea>
+          </div>
+        </div>
+
+        <!-- Narrative Field (hidden by default) -->
+        <div id="narrative-fields" style="display:none;">
+          <div class="form-group">
+            <label>Notes</label>
+            <textarea class="soap-field narrative-field note-autosave" id="note-narrative" placeholder="Session notes..."></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="admin-modal-footer">
+        <button class="btn btn-danger" id="delete-note-btn"><i class="fas fa-trash"></i> Delete</button>
+        <div style="flex:1;"></div>
+        <button class="btn btn-outline" id="email-note-btn"><i class="fas fa-envelope"></i> Email Note</button>
+        <button class="btn btn-secondary" id="finalize-note-btn"><i class="fas fa-check-circle"></i> Mark as Final</button>
+        <button class="btn btn-primary" id="save-note-btn"><i class="fas fa-save"></i> Save</button>
       </div>
     </div>
   </div>

@@ -93,8 +93,6 @@ input, textarea, select { font-family: inherit; font-size: 0.95rem; }
 
 /* === ADMIN LAYOUT === */
 .admin-layout {
-  display: grid;
-  grid-template-columns: var(--admin-sidebar-w) 1fr;
   min-height: 100vh;
 }
 
@@ -119,7 +117,7 @@ input, textarea, select { font-family: inherit; font-size: 0.95rem; }
   margin-bottom: 1rem;
 }
 .sidebar-brand img {
-  height: 50px;
+  height: 250px;
   filter: brightness(10);
   margin-bottom: 0.5rem;
 }
@@ -752,6 +750,303 @@ select.form-control {
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
+/* === CLINICAL NOTES LAYOUT === */
+.notes-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 1.5rem;
+  min-height: 600px;
+}
+.notes-patient-sidebar {
+  background: #fff;
+  border-radius: 16px;
+  padding: 1rem;
+  box-shadow: 0 2px 12px rgba(91,34,69,0.06);
+  overflow-y: auto;
+  max-height: 80vh;
+  position: sticky;
+  top: 2rem;
+}
+.notes-search { margin-bottom: 0.75rem; }
+.notes-search input {
+  width: 100%;
+  padding: 0.6rem 0.9rem;
+  border: 1.5px solid #E4D0E4;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  outline: none;
+  transition: border-color 0.3s;
+}
+.notes-search input:focus {
+  border-color: #6B2D5B;
+  box-shadow: 0 0 0 3px rgba(107,45,91,0.08);
+}
+.notes-patient-filter {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+}
+.notes-patient-filter .btn {
+  flex: 1;
+  justify-content: center;
+  padding: 0.4rem 0.5rem;
+  font-size: 0.75rem;
+  border-radius: 8px;
+  border: 1.5px solid #E4D0E4;
+  background: #fff;
+  color: #7A6A7B;
+}
+.notes-patient-filter .btn.active {
+  background: #6B2D5B;
+  color: #fff;
+  border-color: #6B2D5B;
+}
+.notes-patient-item {
+  cursor: pointer;
+  padding: 0.75rem;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  margin-bottom: 0.25rem;
+  transition: all 0.2s;
+}
+.notes-patient-item:hover {
+  background: #FDFAFD;
+  border-color: #F3E8F3;
+}
+.notes-patient-item.active {
+  background: #F3E8F3;
+  border-color: #E4D0E4;
+}
+.notes-patient-item h4 {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #2D1B2E;
+  margin-bottom: 0.15rem;
+}
+.notes-patient-item p {
+  font-size: 0.78rem;
+  color: #7A6A7B;
+  margin: 0;
+}
+.notes-patient-item .patient-status {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+}
+.notes-patient-item .patient-status.active { color: #2E7D5B; background: #E8F5E9; }
+.notes-patient-item .patient-status.discharged { color: #7A6A7B; background: #F3E8F3; }
+
+/* Notes main area */
+.notes-main {
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 12px rgba(91,34,69,0.06);
+  min-height: 600px;
+}
+.notes-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  color: #7A6A7B;
+  text-align: center;
+}
+.notes-empty-state i {
+  font-size: 3rem;
+  color: #E4D0E4;
+  margin-bottom: 1rem;
+}
+.notes-empty-state h4 {
+  color: #4A3A4B;
+  margin-bottom: 0.5rem;
+}
+.notes-empty-state p {
+  font-size: 0.9rem;
+}
+
+/* Patient header in notes area */
+.notes-patient-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #F3E8F3;
+}
+.notes-patient-header .patient-info h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.3rem;
+  color: #2D1B2E;
+  margin-bottom: 0.25rem;
+  border: none;
+  padding: 0;
+}
+.notes-patient-header .patient-info p {
+  font-size: 0.85rem;
+  color: #7A6A7B;
+  margin: 0;
+}
+.notes-patient-header .patient-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Notes list header */
+.notes-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.notes-list-header h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  color: #2D1B2E;
+  margin: 0;
+  border: none;
+  padding: 0;
+}
+
+/* Note cards */
+.note-card {
+  border: 1px solid #F3E8F3;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 0.75rem;
+  background: #FDFAFD;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.note-card:hover {
+  border-color: #E4D0E4;
+  box-shadow: 0 2px 8px rgba(91,34,69,0.05);
+}
+.note-card .note-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+.note-card .note-date {
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: #2D1B2E;
+}
+.note-card .note-meta {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.note-card .note-type-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0.15rem 0.5rem;
+  border-radius: 100px;
+  background: #F3E8F3;
+  color: #6B2D5B;
+}
+.note-card .note-status-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0.15rem 0.5rem;
+  border-radius: 100px;
+}
+.note-status-badge.draft { background: #FFF8E1; color: #F57F17; }
+.note-status-badge.final { background: #E8F5E9; color: #2E7D5B; }
+.note-card .note-preview {
+  font-size: 0.82rem;
+  color: #7A6A7B;
+  line-height: 1.5;
+}
+
+/* Note editor modal - SOAP fields */
+.soap-section { margin-bottom: 1rem; }
+.soap-label {
+  font-weight: 700;
+  color: #6B2D5B;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 0.8rem;
+  margin-bottom: 0.3rem;
+  display: block;
+}
+.soap-field {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border: 1.5px solid #E4D0E4;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  color: #2D1B2E;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.3s;
+  resize: vertical;
+  min-height: 80px;
+  font-family: inherit;
+  line-height: 1.6;
+}
+.soap-field:focus {
+  border-color: #6B2D5B;
+  box-shadow: 0 0 0 3px rgba(107,45,91,0.08);
+}
+.narrative-field {
+  min-height: 200px;
+}
+
+/* Auto-save indicator */
+.save-indicator {
+  font-size: 0.8rem;
+  color: #7A6A7B;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.save-indicator.saving { color: #D4A017; }
+.save-indicator.saved { color: #2E7D5B; }
+.save-indicator.error { color: #C0392B; }
+
+/* Note editor header bar */
+.note-editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+.note-editor-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+/* Note type selector */
+.note-type-selector {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+}
+.note-type-selector .btn {
+  flex: 1;
+  justify-content: center;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.82rem;
+  border-radius: 8px;
+}
+.note-type-selector .btn.active {
+  background: #6B2D5B;
+  color: #fff;
+  border-color: #6B2D5B;
+}
+
 @media (max-width: 768px) {
   .admin-mobile-toggle { display: flex; }
   .admin-sidebar {
@@ -765,4 +1060,6 @@ select.form-control {
   .form-row { grid-template-columns: 1fr; }
   .stats-grid { grid-template-columns: 1fr; }
   .admin-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
+  .notes-layout { grid-template-columns: 1fr; }
+  .notes-patient-sidebar { max-height: 300px; position: static; }
 }

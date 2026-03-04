@@ -365,6 +365,7 @@ function renderBlogPreview() {
 
   const posts = SITE_CONFIG.blogPosts.slice(0, 3);
   el.innerHTML = posts.map(p => renderBlogCard(p)).join('');
+  initScrollEffects();
 }
 
 function renderBlogCard(post) {

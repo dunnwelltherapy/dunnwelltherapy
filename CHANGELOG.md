@@ -14,7 +14,7 @@ Professional website for **DunnWell Therapy, LLC**, an occupational therapy prac
 - **Firebase Spark (free tier)** backend for admin panel:
   - **Firebase Authentication** for secure admin login (email + password)
   - **Cloud Firestore** for storing all site content
-  - **Firebase Storage** for image uploads
+  - **Firebase Storage** for image uploads (requires Blaze plan upgrade, currently bypassed)
 - **Config-driven content** via `js/config.js` (fallback when Firebase is unavailable)
 - **Quill.js** rich text editor for blog posts in admin panel
 - **EmailJS** for dual-email contact form delivery (with mailto fallback)
@@ -58,7 +58,11 @@ Professional website for **DunnWell Therapy, LLC**, an occupational therapy prac
 │   ├── logo-icon.png       # Lotus icon only (Design 4)
 │   ├── bianca-dunn.png     # Bianca's professional headshot
 │   ├── testimonial-video.mov # Video testimonial (original)
-│   └── testimonial-video.mp4 # Video testimonial (converted for browser compatibility)
+│   ├── testimonial-video.mp4 # Video testimonial (converted for browser compatibility)
+│   ├── aota.png              # AOTA credential logo (transparent)
+│   ├── dc-health.png         # DC Health credential logo
+│   ├── florida-health.png    # Florida Health credential logo (transparent)
+│   └── texas-hhs.png         # Texas HHS credential logo (transparent)
 └── CHANGELOG.md            # This file
 ```
 
@@ -229,14 +233,56 @@ Admin Panel:  /admin.html -> login -> dashboard -> edit content -> saves to Fire
 - **Image Library** — Upload, browse, copy URLs, delete images
 - **Import from Config** — One-click button to seed all existing config.js content into Firebase
 
-**Firebase one-time setup (user does this):**
-1. Create a free Firebase project at https://console.firebase.google.com
-2. Enable Authentication (Email/Password), Cloud Firestore, and Storage
-3. Create one admin account (email + password)
-4. Paste the Firebase config into `js/firebase-config.js`
-5. Log in at `/admin.html` and click "Import from Config" to seed content
+**Firebase setup (completed):**
+- Firebase project: `dunnwelltherapy` (Spark/free plan)
+- Authentication: Email/Password enabled, admin account created
+- Cloud Firestore: Production rules deployed
+- Firebase Storage: Not yet enabled (requires Blaze plan)
+- Firebase config: Real credentials in `js/firebase-config.js`
+- Admin login: https://dunnwelltherapy.com/admin.html
 
-### 10. Content Polish
+### 10. Firebase Setup & Deployment
+
+- Created Firebase project "Dunnwelltherapy" on the free Spark plan
+- Enabled **Cloud Firestore** with production security rules (public read, authenticated write)
+- Enabled **Firebase Authentication** with Email/Password provider
+- Created admin user account (care@dunnwelltherapy.com)
+- Registered web app and configured `js/firebase-config.js` with real credentials
+- **Firebase Storage** skipped for now (requires Blaze plan upgrade). Images are managed by adding files to the `images/` folder and redeploying
+- Deployed Firestore security rules via Firebase Console
+- Admin panel live at: https://dunnwelltherapy.com/admin.html
+
+### 11. Admin Panel: Full Content Coverage
+
+Extended the admin panel so every piece of website content is editable:
+
+- **Homepage section** (new): Edit hero subtitle, tagline, delivery methods, "What Makes DunnWell Different" checklist, "Who We Help" list
+- **Services section** (extended): Edit "Our Approach" list and "What Parents Can Expect" checklist
+- **Site Settings** (extended): Edit site name, tagline, service locations (type/icon/description), and service interest dropdown options
+- **Import from Config** now imports ALL content including homepage, approach, expectations, service locations, and service interests
+- **Firebase Loader** updated to load homepage and services page data from Firestore
+- Fixed admin layout CSS bug (double sidebar offset causing squished content)
+
+### 12. Logo Sizing Update
+
+- Increased nav logo to **300px** height across all pages
+- Nav bar remains at 140px, logo overflows with `z-index: 10`
+- Hero section top padding increased to `14rem` to clear the larger logo
+- Admin sidebar logo increased to **250px**
+
+### 13. Footer Credential Logos
+
+Added professional affiliation/credential logos to the footer of all 6 pages:
+- **AOTA** (American Occupational Therapy Association)
+- **DC Health** (Government of the District of Columbia)
+- **Florida Health**
+- **Texas Health and Human Services**
+
+White backgrounds removed from AOTA, Florida Health, and Texas HHS using ImageMagick. Logos displayed in a centered row with hover effect above the copyright line.
+
+New image files: `images/aota.png`, `images/dc-health.png`, `images/florida-health.png`, `images/texas-hhs.png`
+
+### 14. Content Polish
 
 - Removed all em dashes (`—`) from visible content across all pages and config
 - Replaced with proper punctuation (commas, periods) for clean readability
@@ -277,7 +323,7 @@ All site content is managed from a single file. To update the website, edit `con
 
 | Item | Current Value | Where to Get It |
 |---|---|---|
-| **Firebase Config** | Empty in `js/firebase-config.js` | Firebase Console > Project Settings > Your Apps > Web |
+| **Firebase Config** | ✅ Configured in `js/firebase-config.js` | Firebase Console > Project Settings > Your Apps > Web |
 | EmailJS Public Key | `YOUR_EMAILJS_PUBLIC_KEY` | https://www.emailjs.com |
 | EmailJS Service ID | `YOUR_EMAILJS_SERVICE_ID` | EmailJS dashboard |
 | EmailJS Contact Template | `YOUR_CONTACT_TEMPLATE_ID` | EmailJS dashboard |
@@ -295,25 +341,35 @@ All site content is managed from a single file. To update the website, edit `con
 
 ---
 
-## How to Share / Host the Site
+## Hosting & Deployment
 
-### Quick Share (for review, no account needed)
-1. Go to **https://app.netlify.com/drop**
-2. Drag the entire `website` folder onto the page
-3. Get a live URL instantly (e.g. `https://random-name.netlify.app`)
-4. Share that link with anyone
+### Live Site
+- **Production URL:** https://dunnwelltherapy.com
+- **Hosted on:** Vercel (free tier)
+- **GitHub Repo:** https://github.com/dunnwelltherapy/dunnwelltherapy
 
-### Deploy with Vercel (custom subdomain)
+### Domain & DNS (Squarespace)
+Domain DNS is managed through Squarespace. The following custom records point to Vercel:
+
+| Host | Type | TTL | Data |
+|------|------|-----|------|
+| `@` | A | 30 mins | `76.76.21.21` |
+| `www` | CNAME | 30 mins | `cname.vercel-dns.com` |
+
+Google Workspace email records (MX, TXT/SPF, DKIM) are also configured and should not be modified.
+
+### How to Redeploy After Changes
 ```bash
 cd "/Volumes/Willie Extr/Bianca Dunn/website"
-vercel
+vercel --prod
 ```
-Gives you a `*.vercel.app` URL in ~30 seconds.
 
-### Other hosting options
-- **Firebase Hosting** — Since you'll set up Firebase anyway, you can host there too (`firebase deploy`)
-- **GitHub Pages** — Free, requires a GitHub repo
-- **Netlify** — Free tier with custom domain support, continuous deploy from Git
+### How to Push Changes to GitHub
+```bash
+cd "/Volumes/Willie Extr/Bianca Dunn/website"
+git add -A && git commit -m "description of changes" && git push
+```
+Note: GitHub auth is set to the `dunnwelltherapy` account. Vercel deploys are done via CLI (not connected to GitHub).
 
 ---
 
