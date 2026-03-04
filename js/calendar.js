@@ -17,15 +17,19 @@ document.addEventListener('DOMContentLoaded', () => {
 async function handleGCalBooking(e) {
   e.preventDefault();
 
-  const name = document.getElementById('gcal-name').value.trim();
+  const firstName = document.getElementById('gcal-first-name').value.trim();
+  const lastName = document.getElementById('gcal-last-name').value.trim();
+  const name = firstName + ' ' + lastName;
   const email = document.getElementById('gcal-email').value.trim();
   const phone = document.getElementById('gcal-phone') ? document.getElementById('gcal-phone').value.trim() : '';
+  const age = document.getElementById('gcal-age') ? document.getElementById('gcal-age').value.trim() : '';
+  const state = document.getElementById('gcal-state') ? document.getElementById('gcal-state').value : '';
   const date = document.getElementById('gcal-date').value;
   const time = document.getElementById('gcal-time').value;
   const service = document.getElementById('gcal-service').value;
   const notes = document.getElementById('gcal-notes').value.trim();
 
-  if (!name || !email || !date || !time) {
+  if (!firstName || !lastName || !email || !date || !time) {
     window.showAlert('booking-error');
     return;
   }
@@ -37,7 +41,7 @@ async function handleGCalBooking(e) {
   submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Booking...';
 
   try {
-    const response = await fetch(APPS_SCRIPT_URL, {
+    await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
       mode: 'no-cors',
       headers: { 'Content-Type': 'application/json' },
@@ -45,6 +49,8 @@ async function handleGCalBooking(e) {
         name,
         email,
         phone,
+        age,
+        state,
         date,
         time,
         service,
