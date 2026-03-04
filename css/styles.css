@@ -628,12 +628,11 @@ p  { margin-bottom: 1rem; }
   margin: 0 auto;
   border-radius: var(--radius-lg);
   overflow: hidden;
-  box-shadow: var(--shadow-lg);
+  background: transparent;
 }
 .video-testimonial video {
   width: 100%;
   display: block;
-  border-radius: var(--radius-lg);
 }
 .about-content h2 { margin-bottom: 0.5rem; }
 .about-content .credentials {

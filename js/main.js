@@ -361,9 +361,8 @@ function renderTestimonials() {
     videoContainer.style.gridTemplateColumns = cols;
     videoContainer.innerHTML = SITE_CONFIG.videoTestimonials.map(v => `
       <div class="video-testimonial">
-        <video controls preload="metadata">
-          <source src="${v.url}" type="video/mp4">
-          Your browser does not support the video tag.
+        <video controls preload="auto" playsinline>
+          <source src="${v.url}#t=0.1" type="video/mp4">
         </video>
       </div>
     `).join('');
