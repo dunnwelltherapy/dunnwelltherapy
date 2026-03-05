@@ -308,7 +308,7 @@ The admin panel is the most important tool for managing the website. **You do NO
 *If you don't have login credentials yet, see Section 14 for how to create an admin account.*
 
 ### What the admin panel looks like:
-- On the **left side**, there's a vertical menu (called a "sidebar") with clickable section names: Dashboard, Homepage, Blog Posts, Testimonials, Services, About/Bio, Settings, Image Library, Clinical Notes
+- On the **left side**, there's a vertical menu (called a "sidebar") with clickable section names: Dashboard, Homepage, Blog Posts, Testimonials, Services, About/Bio, Settings, Image Library, Clinical Notes, Page Editor, Theme & Colors
 - On the **right side** is the main content area that changes depending on which section you clicked
 
 ### Section-by-section guide:
@@ -412,6 +412,69 @@ Click **"Image Library"** in the sidebar.
 #### Clinical Notes
 Click **"Clinical Notes"** in the sidebar. This is a private section for patient therapy session documentation. See Section 18 for full details.
 
+#### Page Editor (Visual Page Editing)
+Click **"Page Editor"** in the sidebar. This lets you edit **every piece of text** on every page of the website — headings, paragraphs, section labels, button text, and more.
+
+**How it works:**
+1. You'll see cards for each page: **Global Elements**, **Home Page**, **About Page**, **Services Page**, **Contact Page**, **Book Page**, **Blog Page**
+2. Click any page card to open it
+3. On the left you'll see expandable sections (called "zones") for each part of the page
+4. On the right is a live preview of the actual page
+5. Click a zone to expand it — you'll see text fields you can edit
+6. Make your changes, then click **Save** on each zone, or click **Save All Changes** at the top to save everything at once
+7. The live preview refreshes automatically after saving
+
+**Global Elements** — These are shared across every page:
+- **Page Names** — Rename the navigation links (e.g., change "About" to "Meet Bianca", or "Services" to "What We Offer"). Whatever you type here updates the nav bar on every page.
+- **Announcement Bar** — The banner text and link at the very top of every page
+- **Footer** — The footer tagline, copyright text, and slogan
+- **Contact Information** — Phone, fax, email, address (used site-wide)
+- **Social Media** — Facebook, Instagram, LinkedIn URLs
+- **Office Hours** — Business hours for each day
+
+**Home Page** zones include: Hero Section (main headline, body text, delivery strip), Feature Boxes (the 4 service highlight boxes), What Makes DunnWell Different (heading, body, closing text), Differentiators List, Who We Help Headings + Items, How It Works (3 steps), Testimonials Headings + Items, Call-to-Action Quote, Blog Preview Headings, Blog Posts.
+
+**Other pages** have similar zones for their hero banners, section headings, CTA sections, form headings, etc.
+
+#### Theme & Colors
+Click **"Theme & Colors"** in the sidebar. This lets you completely customize the look of the website.
+
+**Brand Colors:**
+- **Primary Color** — Buttons, links, navbar accents (default: plum #6B2D5B)
+- **Primary Dark** — Hero background, footer, dark sections
+- **Primary Light** — Hover states, lighter accents
+- **Accent / Mauve** — Decorative elements, dividers
+
+**Background Colors:**
+- **Warm Background** — Testimonials, alternating sections
+- **Lavender Tint** — Light purple background sections
+- **Page Background** — Main page background color
+
+**Text Colors:**
+- **Heading Text** — Page titles, section headings
+- **Body Text** — Paragraphs, general content
+
+**Border & Corners:**
+- **Small / Medium / Large / Extra Large Radius** — Sliders that control how rounded corners are on different elements (cards, buttons, images, sections). Slide to 0 for sharp corners, higher for more rounded.
+- **Card Border Color** — The color of borders around cards and boxes
+- **Border Width** — How thick card borders are (0 = no visible border)
+
+**Page Section Borders:**
+- **Hero Section** — Border on the homepage hero banner
+- **Page Hero** — Border on About, Services, Contact, etc. page banners
+- **CTA Sections** — Border on call-to-action dark sections
+- **Footer** — Top border on the footer
+- **Section Border Color** — Color for all section borders
+- **Section Border Radius** — Corner rounding on sections
+
+**Hero Background Image:**
+- Upload a background image for the homepage hero
+- The color overlay still applies on top
+
+After making changes, click **Save Theme**. Changes appear on the live site immediately — no deployment needed.
+
+To restore defaults, click **Reset to Defaults** then **Save Theme**.
+
 ---
 
 ## 8. HOW THE BOOKING FORM WORKS
@@ -483,7 +546,7 @@ Firebase is a free service by Google. It stores all the website's content — li
 
 | Drawer Name | What's Inside |
 |---|---|
-| **settings** | Phone, email, address, hours, social links, homepage text, about page text |
+| **settings** | Phone, email, address, hours, social links, homepage text, about page text, theme colors/borders, page content edits, page names |
 | **services** | The 4 therapy services with descriptions and features |
 | **blogPosts** | All blog articles |
 | **testimonials** | Text quotes from families |
@@ -553,9 +616,9 @@ website/
 |---|---|
 | `config.js` | Contains all default website content as a backup. Also stores API keys. If Firebase is down, the site uses this. |
 | `firebase-config.js` | The "password" to connect to the Firebase database. |
-| `firebase-loader.js` | Grabs the latest content from Firebase when someone visits the site. Falls back to config.js if Firebase doesn't respond. |
+| `firebase-loader.js` | Grabs the latest content from Firebase when someone visits the site. Also applies theme colors/borders and inline content edits (data-edit system). Falls back to config.js if Firebase doesn't respond. |
 | `main.js` | Builds the navigation bar, footer, testimonials, blog previews, mobile menu, and scroll animations on every page. |
-| `admin.js` | Everything in the admin panel — login, editing, saving, uploading images, managing patients and notes. |
+| `admin.js` | Everything in the admin panel — login, editing, saving, uploading images, managing patients/notes, Page Editor, Theme & Colors. |
 | `calendar.js` | Sends booking form data to Google Apps Script to create calendar events. |
 | `contact.js` | Sends contact form messages via EmailJS (or falls back to opening the visitor's email app). |
 | `blog.js` | Displays blog posts, handles category filtering, and shows full articles. |
@@ -642,6 +705,27 @@ About / Bio → Edit text fields or upload a new photo → Click **Save**
 
 ### Change social media links:
 Settings → Scroll to **Social Media** → Update Facebook/Instagram/LinkedIn URLs → Click **Save Settings**
+
+### Rename a navigation link (e.g., change "About" to "Meet Bianca"):
+Page Editor → Global Elements → **Page Names** → Change the text for any page → Click **Save**
+
+### Edit a page heading or section text:
+Page Editor → Click the page → Expand the zone for the section you want to edit → Change the text → Click **Save**
+
+### Change the website colors:
+Theme & Colors → Adjust the color pickers → Click **Save Theme**
+
+### Make corners more or less rounded:
+Theme & Colors → Scroll to **Border & Corners** → Drag the radius sliders → Click **Save Theme**
+
+### Add borders to page sections:
+Theme & Colors → Scroll to **Page Section Borders** → Drag the width sliders → Pick a border color → Click **Save Theme**
+
+### Change the announcement banner text:
+Page Editor → Global Elements → **Announcement Bar** → Edit the text → Click **Save**
+
+### Edit the footer tagline or slogan:
+Page Editor → Global Elements → **Footer** → Edit the fields → Click **Save**
 
 ---
 
@@ -834,5 +918,5 @@ Add `sudo` before the command (e.g., `sudo npm install -g vercel`). Type your Ma
 
 ---
 
-*Last updated: March 4, 2026*
+*Last updated: March 4, 2026 — Added Page Editor, Theme & Colors, Page Names, borders/corners documentation*
 *Created by Willie Austin with Claude Code*
