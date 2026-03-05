@@ -79,11 +79,34 @@ To work on the website, you need:
 2. A text editor (like Visual Studio Code, free at https://code.visualstudio.com)
 3. A web browser to preview changes
 
-**To preview the site locally (on your computer):**
-1. Open Terminal (search "Terminal" in Spotlight)
-2. Type: `cd "/Volumes/Willie Extr/Bianca Dunn/website"`
-3. Type: `python3 -m http.server 8090`
-4. Open your browser and go to: `http://localhost:8090`
+### What is Terminal?
+Terminal is an app on every Mac that lets you type commands to control your computer. Think of it like texting your computer instructions instead of clicking buttons.
+
+### How to open Terminal:
+1. Press **Cmd + Space** on your keyboard (this opens Spotlight search)
+2. Type **Terminal**
+3. Press **Enter** — a window with a blinking cursor will open. This is where you type commands.
+
+### How to preview the site on your computer:
+This lets you see the website on your own computer before putting it online.
+
+1. Open **Terminal** (see above)
+2. Type this command exactly and press **Enter**:
+   ```
+   cd "/Volumes/Willie Extr/Bianca Dunn/website"
+   ```
+   *What this does:* `cd` means "change directory" — it tells Terminal to go to the website folder. Think of it like double-clicking a folder to open it.
+
+3. Type this command and press **Enter**:
+   ```
+   python3 -m http.server 8090
+   ```
+   *What this does:* This starts a mini web server on your computer so you can view the site in your browser.
+
+4. Open your web browser (Safari, Chrome, etc.) and go to: **http://localhost:8090**
+   - You should see the website!
+
+5. To stop the server when you're done, go back to Terminal and press **Ctrl + C**
 
 ---
 
@@ -405,38 +428,112 @@ Here are all the accounts connected to this website:
 
 ## 14. HOW TO DEPLOY (PUSH CHANGES LIVE)
 
-If someone edits the actual code files (HTML, CSS, or JavaScript), those changes need to be "deployed" (pushed live). Here's how:
+**Important:** If you're only making changes through the **admin panel** (editing blog posts, testimonials, settings, etc.), you do NOT need to deploy. Those changes save directly to Firebase and appear on the website immediately.
 
-### Option A: Using the Terminal (command line)
-1. Open **Terminal** on your Mac
-2. Navigate to the project:
-   ```
-   cd "/Volumes/Willie Extr/Bianca Dunn/website"
-   ```
-3. Add the changed files:
-   ```
-   git add .
-   ```
-4. Save the changes with a message:
-   ```
-   git commit -m "Description of what you changed"
-   ```
-5. Push to GitHub:
-   ```
-   git push origin main
-   ```
-6. Deploy to Vercel:
-   ```
-   npx vercel --prod --yes
-   ```
+**You only need to deploy when someone edits the actual code files** (the HTML, CSS, or JavaScript files in the website folder).
 
-### Option B: Automatic
-If the GitHub repository is connected to Vercel (it should be), simply pushing to GitHub (step 5) will automatically deploy the site. The Vercel deploy command (step 6) is a manual backup method.
+### What does "deploy" mean?
+Deploying means taking the files on your computer and uploading them to the internet so visitors can see the changes on dunnwelltherapy.com.
 
-### Important notes:
-- **Changes made in the admin panel** do NOT require deployment — they save directly to Firebase and show up immediately
-- **Changes to actual code files** (HTML, CSS, JS) DO require deployment
-- Always test locally before deploying (see Section 3)
+### Prerequisites (things you need installed):
+Before deploying, your computer needs these tools installed. If they're already installed, you can skip this.
+
+**Check if Git is installed:**
+1. Open Terminal (Cmd + Space, type "Terminal", press Enter)
+2. Type `git --version` and press Enter
+3. If you see a version number (like `git version 2.39.0`), it's installed
+4. If not, your Mac will prompt you to install it — click **Install**
+
+**Check if Node.js is installed:**
+1. In Terminal, type `node --version` and press Enter
+2. If you see a version number (like `v18.17.0`), it's installed
+3. If not, download it from https://nodejs.org (click the big green button, install it like any other app)
+
+### Step-by-step deployment:
+
+Open **Terminal** (Cmd + Space → type "Terminal" → press Enter), then follow these steps:
+
+**Step 1: Go to the website folder**
+```
+cd "/Volumes/Willie Extr/Bianca Dunn/website"
+```
+*What this does:* Tells Terminal to go to the folder where the website files are. Make sure the external drive is plugged in first!
+
+*What you should see:* Your Terminal prompt should now show the website path. No error messages.
+
+**Step 2: Check what files you changed**
+```
+git status
+```
+*What this does:* Shows you a list of all files you've changed. Changed files show up in red. This is a "look before you leap" step — nothing is being uploaded yet.
+
+*What you should see:* A list of filenames in red text under "modified:" or "untracked files:". If it says "nothing to commit, working tree clean" — there are no changes to deploy.
+
+**Step 3: Add your changed files**
+```
+git add .
+```
+*What this does:* The dot (`.`) means "all changed files." This stages (prepares) all your changes for saving. Think of it like putting papers into an envelope before mailing them.
+
+*What you should see:* Nothing — no output means it worked. If you run `git status` again, the files should now be green instead of red.
+
+**Step 4: Save the changes with a description**
+```
+git commit -m "Describe what you changed here"
+```
+*What this does:* Saves a snapshot of your changes with a message describing what you did. Replace the text in quotes with your own description.
+
+*Examples:*
+- `git commit -m "Updated phone number"`
+- `git commit -m "Added new blog post image"`
+- `git commit -m "Fixed typo on about page"`
+
+*What you should see:* A message showing files changed, like `1 file changed, 3 insertions(+), 1 deletion(-)`
+
+**Step 5: Push to GitHub (backup)**
+```
+git push origin main
+```
+*What this does:* Uploads your saved changes to GitHub (the online backup). Think of it like saving a copy to the cloud.
+
+*What you should see:* Text showing the upload progress, ending with something like `main -> main`
+
+*If it asks for a username/password:* You may need to set up GitHub authentication. See https://docs.github.com/en/authentication
+
+**Step 6: Deploy to the live website**
+```
+npx vercel --prod --yes
+```
+*What this does:* Uploads your files to Vercel, which puts them live on dunnwelltherapy.com. This is the step that actually makes the changes visible to the world.
+
+*What you should see:* Progress messages, then at the end: `Aliased: https://dunnwelltherapy.com` — this means it worked!
+
+*How long does it take?* Usually 10-30 seconds.
+
+### Quick version (for experienced users):
+If you've done this before and just want the commands:
+```
+cd "/Volumes/Willie Extr/Bianca Dunn/website"
+git add .
+git commit -m "Your description here"
+git push origin main
+npx vercel --prod --yes
+```
+
+### What if something goes wrong?
+
+**"fatal: not a git repository"**
+- You're in the wrong folder. Make sure you ran `cd "/Volumes/Willie Extr/Bianca Dunn/website"` first
+- Make sure the external drive is plugged in
+
+**"error: failed to push some refs"**
+- Someone else may have pushed changes. Run `git pull origin main` first, then try `git push origin main` again
+
+**"npx: command not found"**
+- Node.js isn't installed. Download it from https://nodejs.org
+
+**"Vercel CLI" errors**
+- Try running `npm install -g vercel` first to install the Vercel tool, then try the deploy command again
 
 ---
 
