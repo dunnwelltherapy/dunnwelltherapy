@@ -358,6 +358,24 @@ Replaced the icon placeholder in the "Who We Help" split section with a real pho
 
 Files modified: `index.html`
 
+### 19. Services Page Photo
+
+Replaced the icon placeholder in the "What Parents Can Expect" section with a real photo of parents and kids playing together (`images/parents-kids.png`).
+
+Files modified: `services.html`
+
+### 20. Comprehensive Handoff Guide
+
+Created `HANDOFF-GUIDE.md` — a 600+ line, 20-section guide written in plain language for someone with zero technical experience. Covers:
+- Glossary of technical terms
+- How to use Terminal, Finder, and VS Code
+- Admin panel walkthrough (every section)
+- Booking and contact form explanations
+- Firebase, Google Calendar, and EmailJS setup
+- Step-by-step deployment instructions with error troubleshooting
+- Clinical notes documentation
+- All credentials and keys in one place
+
 ---
 
 ## Config-Driven Content (`js/config.js`)
