@@ -51,9 +51,9 @@ This guide explains everything about the DunnWell Therapy website. It is written
 
 The website is hosted on **Vercel** — a free website hosting service. Think of Vercel as the "home" where the website files live on the internet.
 
-- **Vercel Dashboard:** https://vercel.com (log in with your account)
 - **Domain:** dunnwelltherapy.com (connected to Vercel)
 - **Cost:** Free
+- **Note:** There is no separate Vercel login/dashboard account. Deployments are done from the command line using `npx vercel --prod --yes` (see Section 14)
 
 The website code is also stored on **GitHub** — think of this as a backup/storage locker for all the code.
 
@@ -337,13 +337,14 @@ Here are all the accounts connected to this website:
 
 | Service | What It's For | Login URL |
 |---|---|---|
-| **Vercel** | Website hosting | https://vercel.com |
 | **GitHub** | Code storage/backup | https://github.com |
 | **Firebase** | Database, auth, storage | https://console.firebase.google.com |
 | **Google Cloud Console** | Calendar API keys | https://console.cloud.google.com |
 | **Google Apps Script** | Booking automation | https://script.google.com |
 | **EmailJS** | Contact form emails | https://www.emailjs.com |
 | **Domain Registrar** | dunnwelltherapy.com domain | (wherever the domain was purchased) |
+
+**Note:** There is no Vercel account/login. Deployments are done via the command line (see Section 14).
 
 ### Admin Panel Login:
 - **URL:** https://dunnwelltherapy.com/admin.html
