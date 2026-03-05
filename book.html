@@ -14,7 +14,7 @@
 <body>
 
   <div class="announcement-bar" id="announcementBar">
-    Now accepting new families! <a href="book.html">Book your FREE consultation today</a>
+    <span data-edit="announcement.text">Now accepting new families!</span> <a href="book.html" data-edit="announcement.linkText">Book your FREE consultation today</a>
     <button class="close-bar" id="closeBar" aria-label="Close">&times;</button>
   </div>
 
@@ -22,12 +22,12 @@
     <div class="nav-container">
       <a href="index.html" class="nav-logo"><img src="images/logo-full.png" alt="DunnWell Therapy"></a>
       <div class="nav-links" id="navLinks">
-        <a href="index.html">Home</a>
-        <a href="about.html">About</a>
-        <a href="services.html">Services</a>
-        <a href="blog.html">Blog</a>
-        <a href="contact.html">Contact</a>
-        <a href="book.html" class="btn btn-primary btn-sm active">Book Consultation</a>
+        <a href="index.html" data-edit="pageNames.home">Home</a>
+        <a href="about.html" data-edit="pageNames.about">About</a>
+        <a href="services.html" data-edit="pageNames.services">Services</a>
+        <a href="blog.html" data-edit="pageNames.blog">Blog</a>
+        <a href="contact.html" data-edit="pageNames.contact">Contact</a>
+        <a href="book.html" class="btn btn-primary btn-sm active" data-edit="pageNames.book">Book Consultation</a>
       </div>
       <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><span></span><span></span><span></span></button>
     </div>
@@ -35,10 +35,10 @@
 
   <section class="page-hero">
     <div class="container">
-      <p class="section-label">Get Started</p>
-      <h1>Book a Consultation</h1>
+      <p class="section-label" data-edit="bookHero.label">Get Started</p>
+      <h1 data-edit="bookHero.h1">Book a Consultation</h1>
       <div class="divider"></div>
-      <p>Fill out the form below to request your free consultation. We'll confirm your appointment within 24 hours.</p>
+      <p data-edit="bookHero.subtitle">Fill out the form below to request your free consultation. We'll confirm your appointment within 24 hours.</p>
     </div>
   </section>
 
@@ -50,8 +50,8 @@
 
       <div style="max-width: 750px; margin: 0 auto;">
         <div class="card" style="padding: 3rem;">
-          <h3 style="margin-bottom: 0.5rem;"><i class="fas fa-calendar-plus" style="color: var(--plum); margin-right: 0.5rem;"></i> Request an Appointment</h3>
-          <p style="color: var(--text-muted); margin-bottom: 2rem;">Complete the form below and your appointment will be added to our calendar. You'll receive a confirmation email with the details.</p>
+          <h3 style="margin-bottom: 0.5rem;"><i class="fas fa-calendar-plus" style="color: var(--plum); margin-right: 0.5rem;"></i> <span data-edit="bookForm.h3">Request an Appointment</span></h3>
+          <p style="color: var(--text-muted); margin-bottom: 2rem;" data-edit="bookForm.subtitle">Complete the form below and your appointment will be added to our calendar. You'll receive a confirmation email with the details.</p>
           <form id="gcal-booking-form">
             <div class="form-row">
               <div class="form-group"><label>First Name <span class="required">*</span></label><input type="text" class="form-control" id="gcal-first-name" required placeholder="First name"></div>
@@ -102,13 +102,13 @@
   <!-- How It Works -->
   <section class="section-padding bg-warm">
     <div class="container text-center">
-      <p class="section-label">Your First Visit</p>
-      <h2 class="section-title">What to Expect</h2>
-      <p class="section-subtitle">Starting therapy is simple. Here's what happens after you book.</p>
+      <p class="section-label" data-edit="bookHowItWorks.label">Your First Visit</p>
+      <h2 class="section-title" data-edit="bookHowItWorks.h2">What to Expect</h2>
+      <p class="section-subtitle" data-edit="bookHowItWorks.subtitle">Starting therapy is simple. Here's what happens after you book.</p>
       <div class="process-grid">
-        <div class="process-step fade-up delay-1"><div class="process-number">1</div><h3>Book &amp; Connect</h3><p>Schedule your free consultation and tell us about your child's needs and goals.</p></div>
-        <div class="process-step fade-up delay-2"><div class="process-number">2</div><h3>Personalized Evaluation</h3><p>We conduct a comprehensive evaluation in your child's natural environment.</p></div>
-        <div class="process-step fade-up delay-3"><div class="process-number">3</div><h3>Collaborative Plan</h3><p>Receive a customized treatment plan with clear goals and practical strategies for home.</p></div>
+        <div class="process-step fade-up delay-1"><div class="process-number">1</div><h3 data-edit="bookHowItWorks.step1Title">Book &amp; Connect</h3><p data-edit="bookHowItWorks.step1Desc">Schedule your free consultation and tell us about your child's needs and goals.</p></div>
+        <div class="process-step fade-up delay-2"><div class="process-number">2</div><h3 data-edit="bookHowItWorks.step2Title">Personalized Evaluation</h3><p data-edit="bookHowItWorks.step2Desc">We conduct a comprehensive evaluation in your child's natural environment.</p></div>
+        <div class="process-step fade-up delay-3"><div class="process-number">3</div><h3 data-edit="bookHowItWorks.step3Title">Collaborative Plan</h3><p data-edit="bookHowItWorks.step3Desc">Receive a customized treatment plan with clear goals and practical strategies for home.</p></div>
       </div>
     </div>
   </section>
@@ -116,7 +116,7 @@
   <footer class="footer">
     <div class="container">
       <div class="footer-grid">
-        <div class="footer-brand"><img src="images/logo-full.png" alt="DunnWell Therapy"><p>Relationship-centered, individualized occupational therapy that supports meaningful participation in everyday life. Therapy, Dunn Well.</p><div class="footer-social" id="footer-social"></div></div>
+        <div class="footer-brand"><img src="images/logo-full.png" alt="DunnWell Therapy"><p data-edit="footer.tagline">Relationship-centered, individualized occupational therapy that supports meaningful participation in everyday life. Therapy, Dunn Well.</p><div class="footer-social" id="footer-social"></div></div>
         <div><h4>Quick Links</h4><ul class="footer-links"><li><a href="index.html">Home</a></li><li><a href="about.html">About</a></li><li><a href="services.html">Services</a></li><li><a href="book.html">Book Consultation</a></li><li><a href="blog.html">Blog</a></li><li><a href="contact.html">Contact</a></li></ul></div>
         <div><h4>Services</h4><ul class="footer-links" id="footer-services"></ul></div>
         <div><h4>Contact</h4><div id="footer-contact"></div></div>
@@ -127,7 +127,7 @@
         <img src="images/florida-health.png" alt="Florida Health">
         <img src="images/texas-hhs.png" alt="Texas Health and Human Services">
       </div>
-      <div class="footer-bottom"><span>&copy; <span id="footer-year"></span> DunnWell Therapy, LLC. All rights reserved.</span><span>Therapy, Dunn Well.</span></div>
+      <div class="footer-bottom"><span>&copy; <span id="footer-year"></span> <span data-edit="footer.copyright">DunnWell Therapy, LLC. All rights reserved.</span></span><span data-edit="footer.slogan">Therapy, Dunn Well.</span></div>
     </div>
   </footer>
 

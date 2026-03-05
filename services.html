@@ -14,7 +14,7 @@
 <body>
 
   <div class="announcement-bar" id="announcementBar">
-    Now accepting new families! <a href="book.html">Book your FREE consultation today</a>
+    <span data-edit="announcement.text">Now accepting new families!</span> <a href="book.html" data-edit="announcement.linkText">Book your FREE consultation today</a>
     <button class="close-bar" id="closeBar" aria-label="Close">&times;</button>
   </div>
 
@@ -22,12 +22,12 @@
     <div class="nav-container">
       <a href="index.html" class="nav-logo"><img src="images/logo-full.png" alt="DunnWell Therapy"></a>
       <div class="nav-links" id="navLinks">
-        <a href="index.html">Home</a>
-        <a href="about.html">About</a>
-        <a href="services.html" class="active">Services</a>
-        <a href="blog.html">Blog</a>
-        <a href="contact.html">Contact</a>
-        <a href="book.html" class="btn btn-primary btn-sm">Book Consultation</a>
+        <a href="index.html" data-edit="pageNames.home">Home</a>
+        <a href="about.html" data-edit="pageNames.about">About</a>
+        <a href="services.html" class="active" data-edit="pageNames.services">Services</a>
+        <a href="blog.html" data-edit="pageNames.blog">Blog</a>
+        <a href="contact.html" data-edit="pageNames.contact">Contact</a>
+        <a href="book.html" class="btn btn-primary btn-sm" data-edit="pageNames.book">Book Consultation</a>
       </div>
       <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><span></span><span></span><span></span></button>
     </div>
@@ -35,10 +35,10 @@
 
   <section class="page-hero">
     <div class="container">
-      <p class="section-label">What We Offer</p>
-      <h1>Our Services</h1>
+      <p class="section-label" data-edit="servicesHero.label">What We Offer</p>
+      <h1 data-edit="servicesHero.h1">Our Services</h1>
       <div class="divider"></div>
-      <p>Individualized occupational therapy services tailored to your child's unique needs, strengths, and goals.</p>
+      <p data-edit="servicesHero.subtitle">Individualized occupational therapy services tailored to your child's unique needs, strengths, and goals.</p>
     </div>
   </section>
 
@@ -58,9 +58,9 @@
     </div>
     <div class="split-content">
       <div class="split-content-inner fade-right">
-        <p class="section-label">Evidence-Based Care</p>
-        <h2>Our Approach</h2>
-        <p style="margin-bottom: 1rem; color: rgba(255,255,255,0.85);">Our therapy is grounded in current research and best practices, including:</p>
+        <p class="section-label" data-edit="servicesApproach.label">Evidence-Based Care</p>
+        <h2 data-edit="servicesApproach.h2">Our Approach</h2>
+        <p style="margin-bottom: 1rem; color: rgba(255,255,255,0.85);" data-edit="servicesApproach.body">Our therapy is grounded in current research and best practices, including:</p>
         <ul id="approach-list" style="margin-top: 1rem;"></ul>
       </div>
     </div>
@@ -74,9 +74,9 @@
           <img src="images/parents-kids.png" alt="Parents and children playing together" style="width: 100%; border-radius: var(--radius-xl); object-fit: cover;">
         </div>
         <div class="about-content fade-right">
-          <p class="section-label">Working Together</p>
-          <h2 class="section-title">What Parents Can Expect</h2>
-          <p style="margin-bottom: 1rem; color: var(--text-body);">When you partner with DunnWell Therapy, you can expect:</p>
+          <p class="section-label" data-edit="servicesParent.label">Working Together</p>
+          <h2 class="section-title" data-edit="servicesParent.h2">What Parents Can Expect</h2>
+          <p style="margin-bottom: 1rem; color: var(--text-body);" data-edit="servicesParent.body">When you partner with DunnWell Therapy, you can expect:</p>
           <ul id="parent-expect-list" style="margin-top: 1rem;"></ul>
         </div>
       </div>
@@ -86,8 +86,8 @@
   <!-- Private Pay Info -->
   <section class="section-padding bg-warm">
     <div class="container text-center">
-      <p class="section-label">Payment Information</p>
-      <h2 class="section-title">Private-Pay Practice</h2>
+      <p class="section-label" data-edit="servicesPayment.label">Payment Information</p>
+      <h2 class="section-title" data-edit="servicesPayment.h2">Private-Pay Practice</h2>
       <p class="section-subtitle" id="services-payment-note"></p>
       <div style="margin-top: 2rem;">
         <a href="contact.html" class="btn btn-primary btn-lg"><i class="fas fa-phone"></i> Contact Us About Fees</a>
@@ -98,8 +98,8 @@
   <!-- CTA -->
   <section class="cta-section">
     <div class="container">
-      <h2>Not Sure Which Service Is Right for You?</h2>
-      <p>Schedule a free consultation and we'll help determine the best plan of care for your child and family.</p>
+      <h2 data-edit="servicesCta.h2">Not Sure Which Service Is Right for You?</h2>
+      <p data-edit="servicesCta.body">Schedule a free consultation and we'll help determine the best plan of care for your child and family.</p>
       <div class="cta-buttons">
         <a href="book.html" class="btn btn-white btn-lg"><i class="fas fa-calendar-check"></i> Book Free Consultation</a>
       </div>
@@ -111,7 +111,7 @@
       <div class="footer-grid">
         <div class="footer-brand">
           <img src="images/logo-full.png" alt="DunnWell Therapy">
-          <p>Relationship-centered, individualized occupational therapy that supports meaningful participation in everyday life. Therapy, Dunn Well.</p>
+          <p data-edit="footer.tagline">Relationship-centered, individualized occupational therapy that supports meaningful participation in everyday life. Therapy, Dunn Well.</p>
           <div class="footer-social" id="footer-social"></div>
         </div>
         <div><h4>Quick Links</h4><ul class="footer-links"><li><a href="index.html">Home</a></li><li><a href="about.html">About</a></li><li><a href="services.html">Services</a></li><li><a href="book.html">Book Consultation</a></li><li><a href="blog.html">Blog</a></li><li><a href="contact.html">Contact</a></li></ul></div>
@@ -124,7 +124,7 @@
         <img src="images/florida-health.png" alt="Florida Health">
         <img src="images/texas-hhs.png" alt="Texas Health and Human Services">
       </div>
-      <div class="footer-bottom"><span>&copy; <span id="footer-year"></span> DunnWell Therapy, LLC. All rights reserved.</span><span>Therapy, Dunn Well.</span></div>
+      <div class="footer-bottom"><span>&copy; <span id="footer-year"></span> <span data-edit="footer.copyright">DunnWell Therapy, LLC. All rights reserved.</span></span><span data-edit="footer.slogan">Therapy, Dunn Well.</span></div>
     </div>
   </footer>
 

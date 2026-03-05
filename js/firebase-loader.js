@@ -126,6 +126,104 @@ async function loadFirebaseContent() {
       });
     }
 
+    // Load & apply theme colors
+    try {
+      const themeSnap = await db.collection('settings').doc('theme').get();
+      if (themeSnap.exists) {
+        const t = themeSnap.data();
+        const root = document.documentElement;
+        if (t.plum)      root.style.setProperty('--plum', t.plum);
+        if (t.plumDeep)  root.style.setProperty('--plum-deep', t.plumDeep);
+        if (t.plumLight) root.style.setProperty('--plum-light', t.plumLight);
+        if (t.mauve)     root.style.setProperty('--mauve', t.mauve);
+        if (t.bgWarm)    root.style.setProperty('--bg-warm', t.bgWarm);
+        if (t.lavender)  root.style.setProperty('--lavender', t.lavender);
+        if (t.bgCream)   root.style.setProperty('--bg-cream', t.bgCream);
+        if (t.textDark)  root.style.setProperty('--text-dark', t.textDark);
+        if (t.textBody)  root.style.setProperty('--text-body', t.textBody);
+        // Derived colors
+        if (t.lavender)  root.style.setProperty('--mauve-light', t.lavender);
+        if (t.plum)      root.style.setProperty('--plum-medium', t.plum);
+
+        // Border / radius overrides
+        if (t.radiusSm)    root.style.setProperty('--radius-sm', t.radiusSm + 'px');
+        if (t.radiusMd)    root.style.setProperty('--radius-md', t.radiusMd + 'px');
+        if (t.radiusLg)    root.style.setProperty('--radius-lg', t.radiusLg + 'px');
+        if (t.radiusXl)    root.style.setProperty('--radius-xl', t.radiusXl + 'px');
+        // Card borders
+        if (t.borderWidth && parseFloat(t.borderWidth) > 0) {
+          var bw = t.borderWidth + 'px';
+          var bc = t.borderColor || '#E4D0E4';
+          document.querySelectorAll('.card, .feature-box, .contact-info-box, .testimonial-card, .blog-card, .process-step').forEach(function (el) {
+            el.style.border = bw + ' solid ' + bc;
+          });
+        }
+
+        // Page section borders
+        var sbc = t.sectionBorderColor || '#C9A0C9';
+        var sr = t.sectionRadius ? t.sectionRadius + 'px' : '0';
+        if (t.heroBorder && parseFloat(t.heroBorder) > 0) {
+          var heroEl2 = document.querySelector('.hero');
+          if (heroEl2) { heroEl2.style.borderBottom = t.heroBorder + 'px solid ' + sbc; if (parseFloat(sr)) heroEl2.style.borderRadius = '0 0 ' + sr + ' ' + sr; }
+        }
+        if (t.pageHeroBorder && parseFloat(t.pageHeroBorder) > 0) {
+          document.querySelectorAll('.page-hero').forEach(function (el) {
+            el.style.borderBottom = t.pageHeroBorder + 'px solid ' + sbc;
+            if (parseFloat(sr)) el.style.borderRadius = '0 0 ' + sr + ' ' + sr;
+          });
+        }
+        if (t.ctaBorder && parseFloat(t.ctaBorder) > 0) {
+          document.querySelectorAll('.cta-section').forEach(function (el) {
+            el.style.border = t.ctaBorder + 'px solid ' + sbc;
+            if (parseFloat(sr)) el.style.borderRadius = sr;
+          });
+        }
+        if (t.footerBorder && parseFloat(t.footerBorder) > 0) {
+          var footerEl = document.querySelector('.footer');
+          if (footerEl) footerEl.style.borderTop = t.footerBorder + 'px solid ' + sbc;
+        }
+
+        // Helper: hex color to rgba string
+        function hexRgba(hex, alpha) {
+          hex = hex.replace('#', '');
+          var r = parseInt(hex.substring(0, 2), 16);
+          var g = parseInt(hex.substring(2, 4), 16);
+          var b = parseInt(hex.substring(4, 6), 16);
+          return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
+        }
+
+        // Update hero gradient with theme colors + optional bg image
+        var deep = t.plumDeep || '#4A1A3A';
+        var mid  = t.plum     || '#6B2D5B';
+        var lite = t.plumLight|| '#9B5F8B';
+        var overlay = 'linear-gradient(160deg, ' + hexRgba(deep, 0.88) + ' 0%, ' + hexRgba(mid, 0.82) + ' 40%, ' + hexRgba(lite, 0.75) + ' 100%)';
+        var heroEl = document.querySelector('.hero');
+        if (heroEl) {
+          if (t.heroBgImage) {
+            heroEl.style.background = overlay + ', url(' + t.heroBgImage + ') center/cover no-repeat';
+          } else {
+            heroEl.style.background = overlay + ', linear-gradient(135deg, ' + deep + ', ' + mid + ')';
+          }
+          heroEl.style.backgroundSize = 'cover';
+          heroEl.style.backgroundPosition = 'center';
+        }
+
+        // Update page-hero gradients (about, services, contact, etc.)
+        document.querySelectorAll('.page-hero').forEach(function (el) {
+          el.style.background = 'linear-gradient(160deg, ' + hexRgba(deep, 0.90) + ' 0%, ' + hexRgba(mid, 0.85) + ' 50%, ' + hexRgba(lite, 0.78) + ' 100%), linear-gradient(135deg, ' + deep + ', ' + mid + ')';
+        });
+
+        // Update CTA sections
+        document.querySelectorAll('.cta-section').forEach(function (el) {
+          el.style.background = deep;
+        });
+
+        SITE_CONFIG.theme = t;
+      }
+    } catch (e) {
+      console.warn('Theme load skipped:', e.message);
+    }
+
     // Load video testimonials
     try {
       const videoSnap = await db.collection('videoTestimonials').get();
@@ -137,6 +235,33 @@ async function loadFirebaseContent() {
       }
     } catch (e) {
       console.warn('Video testimonials load failed:', e.message);
+    }
+
+    // Load & apply siteContent (data-edit attributes)
+    try {
+      const contentSnap = await db.collection('settings').doc('siteContent').get();
+      if (contentSnap.exists) {
+        const content = contentSnap.data();
+        document.querySelectorAll('[data-edit]').forEach(function (el) {
+          var key = el.getAttribute('data-edit');
+          // Support dotted keys like "homeHero.h1" → content.homeHero.h1
+          var parts = key.split('.');
+          var val = content;
+          for (var i = 0; i < parts.length; i++) {
+            if (val && typeof val === 'object' && parts[i] in val) {
+              val = val[parts[i]];
+            } else {
+              val = undefined;
+              break;
+            }
+          }
+          if (val !== undefined && val !== '') {
+            el.innerHTML = val;
+          }
+        });
+      }
+    } catch (e) {
+      console.warn('Site content load skipped:', e.message);
     }
 
   } catch (err) {

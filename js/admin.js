@@ -17,6 +17,9 @@
   let quillEditor = null;
   let pendingDeleteFn = null;
 
+  // Page Editor state
+  let currentEditorPage = null;
+
   // Clinical Notes state
   let selectedPatientId = null;
   let selectedPatientData = null;
@@ -128,6 +131,8 @@
       case 'services': loadServices(); loadServicesExtra(); break;
       case 'about': loadAbout(); break;
       case 'settings': loadSettings(); break;
+      case 'pages': loadPageEditor(); break;
+      case 'theme': loadTheme(); break;
       case 'images': loadImages(); break;
       case 'notes': loadPatients(); break;
     }
@@ -283,6 +288,7 @@
       closeModal('blog-modal');
       loadBlogPosts();
       loadDashboard();
+      refreshCollectionZones();
     } catch (e) {
       showToast('Save failed: ' + e.message, 'error');
     }
@@ -305,9 +311,11 @@
     pendingDeleteFn = async () => {
       try {
         await db.collection('blogPosts').doc(docId).delete();
+        await trackDeletion('blogPosts', docId);
         showToast('Blog post deleted.', 'success');
         loadBlogPosts();
         loadDashboard();
+        refreshCollectionZones();
       } catch (e) {
         showToast('Delete failed: ' + e.message, 'error');
       }
@@ -387,6 +395,7 @@
       closeModal('testimonial-modal');
       loadTestimonials();
       loadDashboard();
+      refreshCollectionZones();
     } catch (e) {
       showToast('Save failed: ' + e.message, 'error');
     }
@@ -408,10 +417,15 @@
   function deleteTestimonial(docId) {
     pendingDeleteFn = async () => {
       try {
+        // Get author before deleting so we can track it
+        var snap = await db.collection('testimonials').doc(docId).get();
+        var author = snap.exists ? (snap.data().author || '') : '';
         await db.collection('testimonials').doc(docId).delete();
+        if (author) await trackDeletion('testimonials', author);
         showToast('Testimonial deleted.', 'success');
         loadTestimonials();
         loadDashboard();
+        refreshCollectionZones();
       } catch (e) {
         showToast('Delete failed: ' + e.message, 'error');
       }
@@ -538,7 +552,10 @@
   function deleteVideoTestimonial(docId) {
     pendingDeleteFn = async () => {
       try {
+        var snap = await db.collection('videoTestimonials').doc(docId).get();
+        var url = snap.exists ? (snap.data().url || '') : '';
         await db.collection('videoTestimonials').doc(docId).delete();
+        if (url) await trackDeletion('videoTestimonials', url);
         showToast('Video testimonial removed.', 'success');
         loadVideoTestimonials();
       } catch (e) {
@@ -722,6 +739,7 @@
       closeModal('service-modal');
       loadServices();
       loadDashboard();
+      refreshCollectionZones();
     } catch (e) {
       showToast('Save failed: ' + e.message, 'error');
     }
@@ -744,9 +762,11 @@
     pendingDeleteFn = async () => {
       try {
         await db.collection('services').doc(docId).delete();
+        await trackDeletion('services', docId);
         showToast('Service deleted.', 'success');
         loadServices();
         loadDashboard();
+        refreshCollectionZones();
       } catch (e) {
         showToast('Delete failed: ' + e.message, 'error');
       }
@@ -1019,12 +1039,39 @@
   }
 
   // ---- Import from Config ----
+  // ---- Deletion Tracking ----
+  // Records deleted item identifiers so Import from Config won't bring them back
+  async function trackDeletion(collection, identifier) {
+    try {
+      await db.doc('settings/deletedItems').set({
+        [collection]: firebase.firestore.FieldValue.arrayUnion(identifier)
+      }, { merge: true });
+    } catch (e) {
+      console.warn('Could not track deletion:', e.message);
+    }
+  }
+
+  async function getDeletedItems() {
+    try {
+      var snap = await db.doc('settings/deletedItems').get();
+      return snap.exists ? snap.data() : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
   async function importFromConfig() {
-    if (!confirm('This will import all content from config.js into Firebase. Existing Firebase data will be overwritten. Continue?')) return;
+    if (!confirm('This will import content from config.js into Firebase. Items you previously deleted will be skipped. Continue?')) return;
 
     showToast('Importing content...', 'success');
 
     try {
+      // Load the deleted items list so we skip them
+      var deleted = await getDeletedItems();
+      var deletedBlogs = deleted.blogPosts || [];
+      var deletedServices = deleted.services || [];
+      var deletedTestimonials = deleted.testimonials || [];
+
       const batch = db.batch();
 
       // Import settings (general)
@@ -1069,26 +1116,40 @@
 
       await batch.commit();
 
-      // Import blog posts (separate batch - Firestore limit is 500 per batch)
+      // Import blog posts — skip deleted ones
+      var blogSkipped = 0;
       for (const post of SITE_CONFIG.blogPosts) {
+        if (deletedBlogs.indexOf(post.id) !== -1) { blogSkipped++; continue; }
         await db.collection('blogPosts').doc(post.id).set({
           ...post,
           importedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
       }
 
-      // Import testimonials
+      // Import testimonials — skip deleted, skip duplicates
+      var existingTestimonials = await db.collection('testimonials').get();
+      var existingAuthors = {};
+      existingTestimonials.forEach(function (doc) {
+        var a = doc.data().author;
+        if (a) existingAuthors[a] = true;
+      });
+      var testimSkipped = 0;
       for (let i = 0; i < SITE_CONFIG.testimonials.length; i++) {
+        var t = SITE_CONFIG.testimonials[i];
+        if (deletedTestimonials.indexOf(t.author) !== -1) { testimSkipped++; continue; }
+        if (existingAuthors[t.author]) { testimSkipped++; continue; }
         await db.collection('testimonials').add({
-          ...SITE_CONFIG.testimonials[i],
+          ...t,
           order: i,
           importedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
       }
 
-      // Import services
+      // Import services — skip deleted ones
+      var svcSkipped = 0;
       for (let i = 0; i < SITE_CONFIG.services.length; i++) {
         const svc = SITE_CONFIG.services[i];
+        if (deletedServices.indexOf(svc.id) !== -1) { svcSkipped++; continue; }
         await db.collection('services').doc(svc.id).set({
           ...svc,
           order: i,
@@ -1096,7 +1157,10 @@
         });
       }
 
-      showToast('Import complete! All content is now in Firebase.', 'success');
+      var totalSkipped = blogSkipped + testimSkipped + svcSkipped;
+      var msg = 'Import complete!';
+      if (totalSkipped > 0) msg += ' (' + totalSkipped + ' previously deleted item' + (totalSkipped > 1 ? 's' : '') + ' skipped)';
+      showToast(msg, 'success');
       loadDashboard();
     } catch (e) {
       showToast('Import failed: ' + e.message, 'error');
@@ -1714,6 +1778,1069 @@
     return str.length > len ? str.substring(0, len) + '...' : str;
   }
 
+  // ---- Theme & Colors ----
+  const THEME_DEFAULTS = {
+    plum: '#6B2D5B',
+    plumDeep: '#4A1A3A',
+    plumLight: '#9B5F8B',
+    mauve: '#C9A0C9',
+    bgWarm: '#FDF8FC',
+    lavender: '#F3E8F3',
+    bgCream: '#FAF7F5',
+    textDark: '#2D1B2E',
+    textBody: '#4A3A4B',
+    heroBgImage: '',
+    radiusSm: '10',
+    radiusMd: '16',
+    radiusLg: '24',
+    radiusXl: '32',
+    borderColor: '#E4D0E4',
+    borderWidth: '0',
+    heroBorder: '0',
+    pageHeroBorder: '0',
+    ctaBorder: '0',
+    footerBorder: '0',
+    sectionBorderColor: '#C9A0C9',
+    sectionRadius: '0'
+  };
+
+  // Map theme keys to admin input IDs (without 'theme-' prefix for Firestore keys)
+  const THEME_FIELDS = [
+    { key: 'plum',      inputId: 'theme-plum',       hexId: 'theme-plum-hex',       swatchId: 'swatch-primary' },
+    { key: 'plumDeep',  inputId: 'theme-plum-deep',  hexId: 'theme-plum-deep-hex',  swatchId: 'swatch-primary-dark' },
+    { key: 'plumLight', inputId: 'theme-plum-light', hexId: 'theme-plum-light-hex', swatchId: 'swatch-accent' },
+    { key: 'mauve',     inputId: 'theme-mauve',      hexId: 'theme-mauve-hex',      swatchId: null },
+    { key: 'bgWarm',    inputId: 'theme-bg-warm',    hexId: 'theme-bg-warm-hex',    swatchId: 'swatch-bg' },
+    { key: 'lavender',  inputId: 'theme-lavender',   hexId: 'theme-lavender-hex',   swatchId: null },
+    { key: 'bgCream',   inputId: 'theme-bg-cream',   hexId: 'theme-bg-cream-hex',   swatchId: null },
+    { key: 'textDark',  inputId: 'theme-text-dark',  hexId: 'theme-text-dark-hex',  swatchId: 'swatch-text' },
+    { key: 'textBody',  inputId: 'theme-text-body',  hexId: 'theme-text-body-hex',  swatchId: null }
+  ];
+
+  // Border / radius fields (range sliders + value inputs)
+  const BORDER_FIELDS = [
+    { key: 'radiusSm', sliderId: 'theme-radius-sm', valId: 'theme-radius-sm-val', unit: 'px' },
+    { key: 'radiusMd', sliderId: 'theme-radius-md', valId: 'theme-radius-md-val', unit: 'px' },
+    { key: 'radiusLg', sliderId: 'theme-radius-lg', valId: 'theme-radius-lg-val', unit: 'px' },
+    { key: 'radiusXl', sliderId: 'theme-radius-xl', valId: 'theme-radius-xl-val', unit: 'px' },
+    { key: 'borderWidth', sliderId: 'theme-border-width', valId: 'theme-border-width-val', unit: 'px' },
+    { key: 'heroBorder', sliderId: 'theme-hero-border', valId: 'theme-hero-border-val', unit: 'px' },
+    { key: 'pageHeroBorder', sliderId: 'theme-page-hero-border', valId: 'theme-page-hero-border-val', unit: 'px' },
+    { key: 'ctaBorder', sliderId: 'theme-cta-border', valId: 'theme-cta-border-val', unit: 'px' },
+    { key: 'footerBorder', sliderId: 'theme-footer-border', valId: 'theme-footer-border-val', unit: 'px' },
+    { key: 'sectionRadius', sliderId: 'theme-section-radius', valId: 'theme-section-radius-val', unit: 'px' }
+  ];
+  const BORDER_COLOR_FIELD = { key: 'borderColor', inputId: 'theme-border-color', hexId: 'theme-border-color-hex' };
+  const SECTION_BORDER_COLOR_FIELD = { key: 'sectionBorderColor', inputId: 'theme-section-border-color', hexId: 'theme-section-border-color-hex' };
+
+  async function loadTheme() {
+    try {
+      const snap = await db.doc('settings/theme').get();
+      const data = snap.exists ? snap.data() : {};
+      THEME_FIELDS.forEach(function (f) {
+        var val = data[f.key] || THEME_DEFAULTS[f.key];
+        var colorInput = document.getElementById(f.inputId);
+        var hexInput = document.getElementById(f.hexId);
+        if (colorInput) colorInput.value = val;
+        if (hexInput) hexInput.value = val.toUpperCase();
+        if (f.swatchId) {
+          var sw = document.getElementById(f.swatchId);
+          if (sw) sw.style.background = val;
+        }
+      });
+      // Border / radius fields
+      BORDER_FIELDS.forEach(function (f) {
+        var val = data[f.key] !== undefined ? data[f.key] : THEME_DEFAULTS[f.key];
+        var slider = document.getElementById(f.sliderId);
+        var valInput = document.getElementById(f.valId);
+        if (slider) slider.value = val;
+        if (valInput) valInput.value = val + f.unit;
+      });
+      // Border color
+      [BORDER_COLOR_FIELD, SECTION_BORDER_COLOR_FIELD].forEach(function (cf) {
+        var val = data[cf.key] || THEME_DEFAULTS[cf.key];
+        var colorEl = document.getElementById(cf.inputId);
+        var hexEl = document.getElementById(cf.hexId);
+        if (colorEl) colorEl.value = val;
+        if (hexEl) hexEl.value = val.toUpperCase();
+      });
+
+      // Hero bg image
+      var heroBg = data.heroBgImage || '';
+      var previewEl = document.getElementById('hero-bg-preview');
+      var previewImg = document.getElementById('hero-bg-preview-img');
+      if (heroBg && previewEl && previewImg) {
+        previewImg.src = heroBg;
+        previewEl.style.display = 'inline-block';
+      } else if (previewEl) {
+        previewEl.style.display = 'none';
+      }
+    } catch (err) {
+      console.error('Theme load error:', err);
+      showToast('Error loading theme', 'error');
+    }
+  }
+
+  async function saveTheme() {
+    try {
+      var data = {};
+      THEME_FIELDS.forEach(function (f) {
+        var hexInput = document.getElementById(f.hexId);
+        if (hexInput) data[f.key] = hexInput.value.trim();
+      });
+      // Border / radius fields
+      BORDER_FIELDS.forEach(function (f) {
+        var slider = document.getElementById(f.sliderId);
+        if (slider) data[f.key] = slider.value;
+      });
+      // Border colors
+      [BORDER_COLOR_FIELD, SECTION_BORDER_COLOR_FIELD].forEach(function (cf) {
+        var hexEl = document.getElementById(cf.hexId);
+        if (hexEl) data[cf.key] = hexEl.value.trim();
+      });
+
+      // Upload hero bg if file selected
+      var fileInput = document.getElementById('hero-bg-file');
+      if (fileInput && fileInput.files.length > 0) {
+        showToast('Uploading hero background...', 'info');
+        var url = await uploadImage(fileInput.files[0], 'hero-bg');
+        data.heroBgImage = url;
+      } else {
+        // Keep existing image URL
+        var previewImg = document.getElementById('hero-bg-preview-img');
+        if (previewImg && previewImg.src && previewImg.src !== window.location.href) {
+          data.heroBgImage = previewImg.src;
+        } else {
+          data.heroBgImage = '';
+        }
+      }
+      await db.doc('settings/theme').set(data);
+      showToast('Theme saved! Changes appear on the live site immediately.', 'success');
+    } catch (err) {
+      console.error('Theme save error:', err);
+      showToast('Error saving theme: ' + err.message, 'error');
+    }
+  }
+
+  function resetTheme() {
+    THEME_FIELDS.forEach(function (f) {
+      var val = THEME_DEFAULTS[f.key];
+      var colorInput = document.getElementById(f.inputId);
+      var hexInput = document.getElementById(f.hexId);
+      if (colorInput) colorInput.value = val;
+      if (hexInput) hexInput.value = val.toUpperCase();
+      if (f.swatchId) {
+        var sw = document.getElementById(f.swatchId);
+        if (sw) sw.style.background = val;
+      }
+    });
+    // Reset border / radius fields
+    BORDER_FIELDS.forEach(function (f) {
+      var val = THEME_DEFAULTS[f.key];
+      var slider = document.getElementById(f.sliderId);
+      var valInput = document.getElementById(f.valId);
+      if (slider) slider.value = val;
+      if (valInput) valInput.value = val + f.unit;
+    });
+    [BORDER_COLOR_FIELD, SECTION_BORDER_COLOR_FIELD].forEach(function (cf) {
+      var val = THEME_DEFAULTS[cf.key];
+      var colorEl = document.getElementById(cf.inputId);
+      var hexEl = document.getElementById(cf.hexId);
+      if (colorEl) colorEl.value = val;
+      if (hexEl) hexEl.value = val.toUpperCase();
+    });
+
+    // Clear hero bg
+    var previewEl = document.getElementById('hero-bg-preview');
+    if (previewEl) previewEl.style.display = 'none';
+    var fileInput = document.getElementById('hero-bg-file');
+    if (fileInput) fileInput.value = '';
+    showToast('Defaults restored. Click Save Theme to apply.', 'info');
+  }
+
+  function setupThemeColorSync() {
+    THEME_FIELDS.forEach(function (f) {
+      var colorInput = document.getElementById(f.inputId);
+      var hexInput = document.getElementById(f.hexId);
+      if (!colorInput || !hexInput) return;
+      // Color picker → hex field + swatch
+      colorInput.addEventListener('input', function () {
+        hexInput.value = colorInput.value.toUpperCase();
+        if (f.swatchId) {
+          var sw = document.getElementById(f.swatchId);
+          if (sw) sw.style.background = colorInput.value;
+        }
+      });
+      // Hex field → color picker + swatch
+      hexInput.addEventListener('input', function () {
+        var v = hexInput.value.trim();
+        if (/^#[0-9A-Fa-f]{6}$/.test(v)) {
+          colorInput.value = v;
+          if (f.swatchId) {
+            var sw = document.getElementById(f.swatchId);
+            if (sw) sw.style.background = v;
+          }
+        }
+      });
+    });
+    // Border / radius slider sync
+    BORDER_FIELDS.forEach(function (f) {
+      var slider = document.getElementById(f.sliderId);
+      var valInput = document.getElementById(f.valId);
+      if (!slider || !valInput) return;
+      slider.addEventListener('input', function () {
+        valInput.value = slider.value + f.unit;
+      });
+      valInput.addEventListener('change', function () {
+        var num = parseFloat(valInput.value);
+        if (!isNaN(num)) {
+          slider.value = num;
+          valInput.value = num + f.unit;
+        }
+      });
+    });
+    // Border color sync
+    [BORDER_COLOR_FIELD, SECTION_BORDER_COLOR_FIELD].forEach(function (cf) {
+      var colorEl = document.getElementById(cf.inputId);
+      var hexEl = document.getElementById(cf.hexId);
+      if (!colorEl || !hexEl) return;
+      colorEl.addEventListener('input', function () { hexEl.value = colorEl.value.toUpperCase(); });
+      hexEl.addEventListener('input', function () {
+        if (/^#[0-9A-Fa-f]{6}$/.test(hexEl.value.trim())) colorEl.value = hexEl.value.trim();
+      });
+    });
+
+    // Hero bg upload zone
+    setupUploadZone('hero-bg-upload', 'hero-bg-file', 'hero-bg-preview', 'hero-bg-preview-img');
+    // Hero bg remove
+    var removeBtn = document.getElementById('hero-bg-remove');
+    if (removeBtn) {
+      removeBtn.addEventListener('click', function () {
+        document.getElementById('hero-bg-preview').style.display = 'none';
+        document.getElementById('hero-bg-preview-img').src = '';
+        document.getElementById('hero-bg-file').value = '';
+      });
+    }
+  }
+
+  // ---- Page Editor ----
+  const PAGE_META = {
+    global:   { label: 'Global Elements', icon: 'fa-globe',              url: 'index.html',    color: '#4A4A6A' },
+    home:     { label: 'Home Page',        icon: 'fa-home',               url: 'index.html',    color: '#6B2D5B' },
+    about:    { label: 'About Page',       icon: 'fa-user',               url: 'about.html',    color: '#8B5E7D' },
+    services: { label: 'Services Page',    icon: 'fa-hand-holding-medical', url: 'services.html', color: '#5B7D6B' },
+    contact:  { label: 'Contact Page',     icon: 'fa-envelope',           url: 'contact.html',  color: '#7D6B5B' },
+    book:     { label: 'Book Page',        icon: 'fa-calendar-check',     url: 'book.html',     color: '#5B6B7D' },
+    blog:     { label: 'Blog Page',        icon: 'fa-newspaper',          url: 'blog.html',     color: '#6B5B7D' }
+  };
+
+  const PAGE_ZONES = {
+    global: [
+      {
+        id: 'page-names', label: 'Page Names', icon: 'fa-file-signature',
+        desc: 'Rename navigation links and page titles shown across the site',
+        doc: 'settings/siteContent',
+        fields: [
+          { key: 'pageNames.home', label: 'Home', type: 'text', placeholder: 'Home' },
+          { key: 'pageNames.about', label: 'About', type: 'text', placeholder: 'About' },
+          { key: 'pageNames.services', label: 'Services', type: 'text', placeholder: 'Services' },
+          { key: 'pageNames.blog', label: 'Blog', type: 'text', placeholder: 'Blog' },
+          { key: 'pageNames.contact', label: 'Contact', type: 'text', placeholder: 'Contact' },
+          { key: 'pageNames.book', label: 'Book Button', type: 'text', placeholder: 'Book Consultation' }
+        ]
+      },
+      {
+        id: 'announcement', label: 'Announcement Bar', icon: 'fa-bullhorn',
+        desc: 'Banner text and link shown at the top of every page',
+        doc: 'settings/siteContent',
+        fields: [
+          { key: 'announcement.text', label: 'Banner Text', type: 'text', placeholder: 'Now accepting new families!' },
+          { key: 'announcement.linkText', label: 'Link Text', type: 'text', placeholder: 'Book your FREE consultation today' }
+        ]
+      },
+      {
+        id: 'footer', label: 'Footer', icon: 'fa-shoe-prints',
+        desc: 'Footer tagline, copyright, and slogan across all pages',
+        doc: 'settings/siteContent',
+        fields: [
+          { key: 'footer.tagline', label: 'Footer Tagline', type: 'textarea', placeholder: 'Relationship-centered, individualized occupational therapy...' },
+          { key: 'footer.copyright', label: 'Copyright Text', type: 'text', placeholder: 'DunnWell Therapy, LLC. All rights reserved.' },
+          { key: 'footer.slogan', label: 'Footer Slogan', type: 'text', placeholder: 'Therapy, Dunn Well.' }
+        ]
+      },
+      {
+        id: 'contact-info', label: 'Contact Information', icon: 'fa-phone',
+        desc: 'Phone, email, and office address (used site-wide)',
+        doc: 'settings/general',
+        fields: [
+          { key: 'phone', label: 'Phone', type: 'text', placeholder: '(786) 479-3593' },
+          { key: 'fax', label: 'Fax', type: 'text', placeholder: '(786) 555-0000' },
+          { key: 'emailPrimary', label: 'Primary Email', type: 'text', placeholder: 'care@dunnwelltherapy.com' },
+          { key: 'emailSecondary', label: 'Secondary Email', type: 'text', placeholder: 'care@dunnwelltherapy.com' },
+          { key: 'address', label: 'Address', type: 'text', placeholder: 'Arlington / Alexandria, Virginia' }
+        ]
+      },
+      {
+        id: 'social', label: 'Social Media', icon: 'fa-share-alt',
+        desc: 'Facebook, Instagram, LinkedIn links',
+        doc: 'settings/general',
+        fields: [
+          { key: 'social.facebook', label: 'Facebook URL', type: 'text', placeholder: 'https://facebook.com/dunnwelltherapy' },
+          { key: 'social.instagram', label: 'Instagram URL', type: 'text', placeholder: 'https://instagram.com/dunnwelltherapy' },
+          { key: 'social.linkedin', label: 'LinkedIn URL', type: 'text', placeholder: 'https://linkedin.com/company/dunnwelltherapy' }
+        ]
+      },
+      {
+        id: 'hours', label: 'Office Hours', icon: 'fa-clock',
+        desc: 'Business hours for each day of the week',
+        doc: 'settings/general', hoursEditor: true
+      }
+    ],
+    home: [
+      {
+        id: 'hero', label: 'Hero Section', icon: 'fa-star',
+        desc: 'Main headline, subtitle, body text, and delivery strip',
+        doc: 'settings/siteContent',
+        fields: [
+          { key: 'homeHero.label', label: 'Section Label', type: 'text', placeholder: 'Occupational Therapy for Children, Teens & Families' },
+          { key: 'homeHero.h1', label: 'Headline (HTML ok)', type: 'textarea', placeholder: 'Your child doesn\'t need more pressure...' },
+          { key: 'homeHero.body', label: 'Body Text', type: 'textarea', placeholder: 'At DunnWell Therapy, we provide...' },
+          { key: 'homeHero.delivery', label: 'Delivery Strip', type: 'text', placeholder: 'In-home &bull; Virtual &bull; School & IEP Consulting' }
+        ]
+      },
+      {
+        id: 'feature-boxes', label: 'Feature Boxes', icon: 'fa-th-large',
+        desc: 'Four service highlight boxes below the hero',
+        doc: 'settings/siteContent',
+        fields: [
+          { key: 'featureBoxes.title1', label: 'Box 1 Title', type: 'text', placeholder: 'In-Home & In-Office' },
+          { key: 'featureBoxes.desc1', label: 'Box 1 Description', type: 'text', placeholder: 'Therapy in the environment...' },
+          { key: 'featureBoxes.title2', label: 'Box 2 Title', type: 'text', placeholder: 'Virtual OT' },
+          { key: 'featureBoxes.desc2', label: 'Box 2 Description', type: 'text', placeholder: 'Executive function coaching...' },
+          { key: 'featureBoxes.title3', label: 'Box 3 Title', type: 'text', placeholder: 'Parent Coaching' },
+          { key: 'featureBoxes.desc3', label: 'Box 3 Description', type: 'text', placeholder: 'Practical strategies...' },
+          { key: 'featureBoxes.title4', label: 'Box 4 Title', type: 'text', placeholder: 'IEP Consulting' },
+          { key: 'featureBoxes.desc4', label: 'Box 4 Description', type: 'text', placeholder: 'Navigate evaluations...' }
+        ]
+      },
+      {
+        id: 'what-different', label: 'What Makes DunnWell Different', icon: 'fa-fingerprint',
+        desc: 'Section label, heading, body, and closing text',
+        doc: 'settings/siteContent',
+        fields: [
+          { key: 'homeDifferent.label', label: 'Section Label', type: 'text', placeholder: 'Why DunnWell' },
+          { key: 'homeDifferent.h2', label: 'Heading', type: 'text', placeholder: 'What Makes DunnWell Different' },
+          { key: 'homeDifferent.body', label: 'Body Text (HTML ok)', type: 'textarea', placeholder: 'Most therapy focuses on isolated skills...' },
+          { key: 'homeDifferent.closing', label: 'Closing Text', type: 'textarea', placeholder: 'We believe meaningful progress happens...' }
+        ]
+      },
+      {
+        id: 'differentiators', label: 'Differentiators List', icon: 'fa-check-double',
+        desc: 'Checklist items under the bio photo',
+        doc: 'settings/homepage', listField: 'differentiators'
+      },
+      {
+        id: 'who-we-help-headings', label: 'Who We Help Headings', icon: 'fa-heading',
+        desc: 'Section label, heading, and closing text',
+        doc: 'settings/siteContent',
+        fields: [
+          { key: 'homeWhoWeHelp.label', label: 'Section Label', type: 'text', placeholder: 'Who We Help' },
+          { key: 'homeWhoWeHelp.h2', label: 'Heading', type: 'text', placeholder: 'We Support Children & Teens Who Experience Challenges With:' },
+          { key: 'homeWhoWeHelp.closing', label: 'Closing Text', type: 'textarea', placeholder: 'We also work closely with parents...' }
+        ]
+      },
+      {
+        id: 'who-we-help', label: 'Who We Help Items', icon: 'fa-users',
+        desc: 'Challenges and needs we address',
+        doc: 'settings/homepage', listField: 'whoWeHelp'
+      },
+      {
+        id: 'how-it-works', label: 'How It Works', icon: 'fa-list-ol',
+        desc: 'Three-step process section',
+        doc: 'settings/siteContent',
+        fields: [
+          { key: 'homeHowItWorks.label', label: 'Section Label', type: 'text', placeholder: 'Getting Started' },
+          { key: 'homeHowItWorks.h2', label: 'Heading', type: 'text', placeholder: 'How It Works' },
+          { key: 'homeHowItWorks.subtitle', label: 'Subtitle', type: 'text', placeholder: 'Starting therapy is simple...' },
+          { key: 'homeHowItWorks.step1Title', label: 'Step 1 Title', type: 'text', placeholder: 'Book a Consultation' },
+          { key: 'homeHowItWorks.step1Desc', label: 'Step 1 Description', type: 'text', placeholder: 'Schedule a free consultation...' },
+          { key: 'homeHowItWorks.step2Title', label: 'Step 2 Title', type: 'text', placeholder: 'Personalized Evaluation' },
+          { key: 'homeHowItWorks.step2Desc', label: 'Step 2 Description', type: 'text', placeholder: 'We conduct a comprehensive evaluation...' },
+          { key: 'homeHowItWorks.step3Title', label: 'Step 3 Title', type: 'text', placeholder: 'Collaborative Plan' },
+          { key: 'homeHowItWorks.step3Desc', label: 'Step 3 Description', type: 'text', placeholder: 'Receive a customized treatment plan...' }
+        ]
+      },
+      {
+        id: 'testimonial-headings', label: 'Testimonials Headings', icon: 'fa-heading',
+        desc: 'Section headings for the testimonials area',
+        doc: 'settings/siteContent',
+        fields: [
+          { key: 'homeTestimonials.label', label: 'Section Label', type: 'text', placeholder: 'Client Stories' },
+          { key: 'homeTestimonials.h2', label: 'Heading', type: 'text', placeholder: 'Real Families. Real Stories.' },
+          { key: 'homeTestimonials.subtitle', label: 'Subtitle', type: 'textarea', placeholder: 'Our families share how therapy...' }
+        ]
+      },
+      {
+        id: 'testimonials', label: 'Testimonials', icon: 'fa-quote-right',
+        desc: 'Client stories and video testimonials',
+        collection: 'testimonials'
+      },
+      {
+        id: 'cta', label: 'Call-to-Action Quote', icon: 'fa-quote-left',
+        desc: 'Quote section before blog preview',
+        doc: 'settings/siteContent',
+        fields: [
+          { key: 'homeCta.quote', label: 'Quote Text', type: 'textarea', placeholder: '"Big skills start with little steps..."' }
+        ]
+      },
+      {
+        id: 'blog-headings', label: 'Blog Preview Headings', icon: 'fa-heading',
+        desc: 'Section headings for the blog preview area',
+        doc: 'settings/siteContent',
+        fields: [
+          { key: 'homeBlog.label', label: 'Section Label', type: 'text', placeholder: 'From the Blog' },
+          { key: 'homeBlog.h2', label: 'Heading', type: 'text', placeholder: 'Resources & Insights' },
+          { key: 'homeBlog.subtitle', label: 'Subtitle', type: 'text', placeholder: 'Helpful articles, tips, and education...' }
+        ]
+      },
+      {
+        id: 'blog', label: 'Blog Posts', icon: 'fa-newspaper',
+        desc: 'Blog posts shown on homepage and blog page',
+        collection: 'blogPosts'
+      }
+    ],
+    about: [
+      {
+        id: 'page-hero', label: 'Page Hero', icon: 'fa-image',
+        desc: 'Hero banner heading and subtitle',
+        doc: 'settings/siteContent',
+        fields: [
+          { key: 'aboutHero.label', label: 'Section Label', type: 'text', placeholder: 'About DunnWell' },
+          { key: 'aboutHero.h1', label: 'Heading', type: 'text', placeholder: 'Meet Your Therapist' },
+          { key: 'aboutHero.subtitle', label: 'Subtitle', type: 'textarea', placeholder: 'Relationship-centered, individualized occupational therapy...' }
+        ]
+      },
+      {
+        id: 'therapist', label: 'Therapist Info', icon: 'fa-user-md',
+        desc: 'Name, credentials, and title',
+        doc: 'settings/about',
+        fields: [
+          { key: 'name', label: 'Name', type: 'text', placeholder: 'Bianca Dunn' },
+          { key: 'credentials', label: 'Credentials', type: 'text', placeholder: 'MSOT, OTR/L' },
+          { key: 'title', label: 'Title', type: 'text', placeholder: 'Founder & Licensed Occupational Therapist' }
+        ]
+      },
+      {
+        id: 'bio', label: 'Bio Sections', icon: 'fa-align-left',
+        desc: 'Biography, specialties, and founding story',
+        doc: 'settings/about',
+        fields: [
+          { key: 'bio', label: 'Main Bio', type: 'textarea', placeholder: 'Main biography paragraph...' },
+          { key: 'bioExtended', label: 'Extended Bio', type: 'textarea', placeholder: 'Additional biography...' },
+          { key: 'specialties', label: 'Specialties', type: 'textarea', placeholder: 'Clinical specialties...' },
+          { key: 'founding', label: 'Founding Story', type: 'textarea', placeholder: 'Why DunnWell was founded...' }
+        ]
+      },
+      {
+        id: 'education', label: 'Education & Certifications', icon: 'fa-graduation-cap',
+        desc: 'Degrees and professional certifications',
+        doc: 'settings/about',
+        fields: [
+          { key: 'education', label: 'Education (one per line)', type: 'textarea', isArray: true },
+          { key: 'certifications', label: 'Certifications (one per line)', type: 'textarea', isArray: true }
+        ]
+      },
+      {
+        id: 'mission', label: 'Mission & Payment', icon: 'fa-bullseye',
+        desc: 'Mission statement and payment info',
+        doc: 'settings/about',
+        fields: [
+          { key: 'mission', label: 'Mission Statement', type: 'textarea', placeholder: 'Our mission is...' },
+          { key: 'paymentNote', label: 'Payment Note', type: 'textarea', placeholder: 'Payment information...' }
+        ]
+      },
+      {
+        id: 'locations-headings', label: 'Service Locations Headings', icon: 'fa-heading',
+        desc: 'Heading text for the service locations section',
+        doc: 'settings/siteContent',
+        fields: [
+          { key: 'aboutLocations.label', label: 'Section Label', type: 'text', placeholder: 'Where We Serve' },
+          { key: 'aboutLocations.h2', label: 'Heading', type: 'text', placeholder: 'Service Locations' },
+          { key: 'aboutLocations.subtitle', label: 'Subtitle', type: 'text', placeholder: 'We offer flexible service delivery...' }
+        ]
+      },
+      {
+        id: 'about-cta', label: 'Call-to-Action', icon: 'fa-bullhorn',
+        desc: 'CTA section at the bottom of the about page',
+        doc: 'settings/siteContent',
+        fields: [
+          { key: 'aboutCta.h2', label: 'Heading', type: 'text', placeholder: 'Ready to Start Your Journey?' },
+          { key: 'aboutCta.body', label: 'Body Text', type: 'textarea', placeholder: 'Schedule a free consultation...' }
+        ]
+      }
+    ],
+    services: [
+      {
+        id: 'page-hero', label: 'Page Hero', icon: 'fa-image',
+        desc: 'Hero banner heading and subtitle',
+        doc: 'settings/siteContent',
+        fields: [
+          { key: 'servicesHero.label', label: 'Section Label', type: 'text', placeholder: 'What We Offer' },
+          { key: 'servicesHero.h1', label: 'Heading', type: 'text', placeholder: 'Our Services' },
+          { key: 'servicesHero.subtitle', label: 'Subtitle', type: 'textarea', placeholder: 'Individualized occupational therapy services...' }
+        ]
+      },
+      {
+        id: 'service-cards', label: 'Service Cards', icon: 'fa-hand-holding-medical',
+        desc: 'Individual service offerings (In-Home, Virtual, etc.)',
+        collection: 'services'
+      },
+      {
+        id: 'approach-headings', label: 'Our Approach Headings', icon: 'fa-heading',
+        desc: 'Section headings for the approach area',
+        doc: 'settings/siteContent',
+        fields: [
+          { key: 'servicesApproach.label', label: 'Section Label', type: 'text', placeholder: 'Evidence-Based Care' },
+          { key: 'servicesApproach.h2', label: 'Heading', type: 'text', placeholder: 'Our Approach' },
+          { key: 'servicesApproach.body', label: 'Body Text', type: 'text', placeholder: 'Our therapy is grounded in current research...' }
+        ]
+      },
+      {
+        id: 'approach', label: 'Approach Items', icon: 'fa-brain',
+        desc: 'Evidence-based practices list',
+        doc: 'settings/servicesPage', listField: 'approach'
+      },
+      {
+        id: 'parent-headings', label: 'What Parents Can Expect Headings', icon: 'fa-heading',
+        desc: 'Section headings for the parent expectations area',
+        doc: 'settings/siteContent',
+        fields: [
+          { key: 'servicesParent.label', label: 'Section Label', type: 'text', placeholder: 'Working Together' },
+          { key: 'servicesParent.h2', label: 'Heading', type: 'text', placeholder: 'What Parents Can Expect' },
+          { key: 'servicesParent.body', label: 'Body Text', type: 'text', placeholder: 'When you partner with DunnWell Therapy...' }
+        ]
+      },
+      {
+        id: 'parent-expect', label: 'Parent Expectations Items', icon: 'fa-clipboard-check',
+        desc: 'Expectations checklist',
+        doc: 'settings/servicesPage', listField: 'parentExpect'
+      },
+      {
+        id: 'payment-headings', label: 'Payment Section Headings', icon: 'fa-credit-card',
+        desc: 'Private-pay section headings',
+        doc: 'settings/siteContent',
+        fields: [
+          { key: 'servicesPayment.label', label: 'Section Label', type: 'text', placeholder: 'Payment Information' },
+          { key: 'servicesPayment.h2', label: 'Heading', type: 'text', placeholder: 'Private-Pay Practice' }
+        ]
+      },
+      {
+        id: 'services-cta', label: 'Call-to-Action', icon: 'fa-bullhorn',
+        desc: 'CTA section at the bottom',
+        doc: 'settings/siteContent',
+        fields: [
+          { key: 'servicesCta.h2', label: 'Heading', type: 'text', placeholder: 'Not Sure Which Service Is Right for You?' },
+          { key: 'servicesCta.body', label: 'Body Text', type: 'textarea', placeholder: 'Schedule a free consultation...' }
+        ]
+      }
+    ],
+    contact: [
+      {
+        id: 'page-hero', label: 'Page Hero', icon: 'fa-image',
+        desc: 'Hero banner heading and subtitle',
+        doc: 'settings/siteContent',
+        fields: [
+          { key: 'contactHero.label', label: 'Section Label', type: 'text', placeholder: 'Get In Touch' },
+          { key: 'contactHero.h1', label: 'Heading', type: 'text', placeholder: 'Contact Us' },
+          { key: 'contactHero.subtitle', label: 'Subtitle', type: 'textarea', placeholder: 'We\'d love to hear from you...' }
+        ]
+      },
+      {
+        id: 'contact-form', label: 'Contact Form Headings', icon: 'fa-pen-to-square',
+        desc: 'Form heading and subtitle text',
+        doc: 'settings/siteContent',
+        fields: [
+          { key: 'contactForm.h2', label: 'Form Heading', type: 'text', placeholder: 'Send Us a Message' },
+          { key: 'contactForm.subtitle', label: 'Form Subtitle', type: 'text', placeholder: 'Fill out the form below and we\'ll respond within 24 business hours.' }
+        ]
+      },
+      {
+        id: 'contact-info', label: 'Contact Information', icon: 'fa-phone',
+        desc: 'Phone, email, and office address',
+        doc: 'settings/general',
+        fields: [
+          { key: 'phone', label: 'Phone', type: 'text', placeholder: '(786) 479-3593' },
+          { key: 'emailPrimary', label: 'Primary Email', type: 'text', placeholder: 'care@dunnwelltherapy.com' },
+          { key: 'emailSecondary', label: 'Secondary Email', type: 'text', placeholder: 'care@dunnwelltherapy.com' },
+          { key: 'address', label: 'Address', type: 'text', placeholder: 'Arlington / Alexandria, Virginia' }
+        ]
+      },
+      {
+        id: 'hours', label: 'Office Hours', icon: 'fa-clock',
+        desc: 'Business hours for each day of the week',
+        doc: 'settings/general', hoursEditor: true
+      }
+    ],
+    book: [
+      {
+        id: 'page-hero', label: 'Page Hero', icon: 'fa-image',
+        desc: 'Hero banner heading and subtitle',
+        doc: 'settings/siteContent',
+        fields: [
+          { key: 'bookHero.label', label: 'Section Label', type: 'text', placeholder: 'Get Started' },
+          { key: 'bookHero.h1', label: 'Heading', type: 'text', placeholder: 'Book a Consultation' },
+          { key: 'bookHero.subtitle', label: 'Subtitle', type: 'textarea', placeholder: 'Fill out the form below to request your free consultation...' }
+        ]
+      },
+      {
+        id: 'book-form', label: 'Booking Form Headings', icon: 'fa-pen-to-square',
+        desc: 'Form heading and subtitle text',
+        doc: 'settings/siteContent',
+        fields: [
+          { key: 'bookForm.h3', label: 'Form Heading', type: 'text', placeholder: 'Request an Appointment' },
+          { key: 'bookForm.subtitle', label: 'Form Subtitle', type: 'text', placeholder: 'Complete the form below and your appointment will be added...' }
+        ]
+      },
+      {
+        id: 'service-interests', label: 'Service Options', icon: 'fa-list-check',
+        desc: 'Dropdown options for the booking form',
+        doc: 'settings/general', listField: 'serviceInterests'
+      },
+      {
+        id: 'book-how-it-works', label: 'What to Expect Steps', icon: 'fa-list-ol',
+        desc: 'Three-step process section',
+        doc: 'settings/siteContent',
+        fields: [
+          { key: 'bookHowItWorks.label', label: 'Section Label', type: 'text', placeholder: 'Your First Visit' },
+          { key: 'bookHowItWorks.h2', label: 'Heading', type: 'text', placeholder: 'What to Expect' },
+          { key: 'bookHowItWorks.subtitle', label: 'Subtitle', type: 'text', placeholder: 'Starting therapy is simple...' },
+          { key: 'bookHowItWorks.step1Title', label: 'Step 1 Title', type: 'text', placeholder: 'Book & Connect' },
+          { key: 'bookHowItWorks.step1Desc', label: 'Step 1 Description', type: 'text', placeholder: 'Schedule your free consultation...' },
+          { key: 'bookHowItWorks.step2Title', label: 'Step 2 Title', type: 'text', placeholder: 'Personalized Evaluation' },
+          { key: 'bookHowItWorks.step2Desc', label: 'Step 2 Description', type: 'text', placeholder: 'We conduct a comprehensive evaluation...' },
+          { key: 'bookHowItWorks.step3Title', label: 'Step 3 Title', type: 'text', placeholder: 'Collaborative Plan' },
+          { key: 'bookHowItWorks.step3Desc', label: 'Step 3 Description', type: 'text', placeholder: 'Receive a customized treatment plan...' }
+        ]
+      }
+    ],
+    blog: [
+      {
+        id: 'page-hero', label: 'Page Hero', icon: 'fa-image',
+        desc: 'Hero banner heading and subtitle',
+        doc: 'settings/siteContent',
+        fields: [
+          { key: 'blogHero.label', label: 'Section Label', type: 'text', placeholder: 'Resources & Insights' },
+          { key: 'blogHero.h1', label: 'Heading', type: 'text', placeholder: 'Our Blog' },
+          { key: 'blogHero.subtitle', label: 'Subtitle', type: 'textarea', placeholder: 'Helpful articles, tips, and educational resources...' }
+        ]
+      },
+      {
+        id: 'blog-posts', label: 'Blog Posts', icon: 'fa-newspaper',
+        desc: 'All blog posts',
+        collection: 'blogPosts'
+      },
+      {
+        id: 'blog-cta', label: 'Call-to-Action', icon: 'fa-bullhorn',
+        desc: 'CTA section at the bottom',
+        doc: 'settings/siteContent',
+        fields: [
+          { key: 'blogCta.h2', label: 'Heading', type: 'text', placeholder: 'Have Questions?' },
+          { key: 'blogCta.body', label: 'Body Text', type: 'textarea', placeholder: 'We\'re here to help...' }
+        ]
+      }
+    ]
+  };
+
+  function loadPageEditor() {
+    if (currentEditorPage) {
+      renderPageZones(currentEditorPage);
+    } else {
+      renderPageCards();
+    }
+  }
+
+  function renderPageCards() {
+    const container = document.getElementById('page-editor-container');
+    const html = Object.entries(PAGE_META).map(([id, p]) => `
+      <div class="page-card" onclick="adminPanel.selectEditorPage('${id}')">
+        <div class="page-card-icon" style="background:${p.color};"><i class="fas ${p.icon}"></i></div>
+        <h3>${p.label}</h3>
+        <p>${PAGE_ZONES[id].length} editable section${PAGE_ZONES[id].length !== 1 ? 's' : ''}</p>
+        <span class="page-card-arrow"><i class="fas fa-arrow-right"></i></span>
+      </div>
+    `).join('');
+    container.innerHTML = '<div class="page-cards-grid">' + html + '</div>';
+  }
+
+  function selectEditorPage(pageId) {
+    currentEditorPage = pageId;
+    renderPageZones(pageId);
+  }
+
+  function backToPageCards() {
+    currentEditorPage = null;
+    renderPageCards();
+  }
+
+  function renderPageZones(pageId) {
+    const container = document.getElementById('page-editor-container');
+    const meta = PAGE_META[pageId];
+    const zones = PAGE_ZONES[pageId];
+
+    const zonesHtml = zones.map(z => {
+      if (z.navTo) {
+        return `
+          <div class="zone-card zone-nav" onclick="adminPanel.goToSection('${z.navTo}')">
+            <div class="zone-card-header">
+              <div class="zone-card-info">
+                <i class="fas ${z.icon}"></i>
+                <div><h4>${z.label}</h4><p>${z.desc}</p></div>
+              </div>
+              <span class="zone-card-action"><i class="fas fa-arrow-right"></i> Manage</span>
+            </div>
+          </div>`;
+      }
+      return `
+        <div class="zone-card" id="zone-${pageId}-${z.id}">
+          <div class="zone-card-header" onclick="adminPanel.toggleZone('${pageId}','${z.id}')">
+            <div class="zone-card-info">
+              <i class="fas ${z.icon}"></i>
+              <div><h4>${z.label}</h4><p>${z.desc}</p></div>
+            </div>
+            <i class="fas fa-chevron-down zone-toggle-icon"></i>
+          </div>
+          <div class="zone-card-editor" id="zone-editor-${pageId}-${z.id}">
+            <div class="zone-loading"><i class="fas fa-spinner fa-spin"></i> Loading...</div>
+          </div>
+        </div>`;
+    }).join('');
+
+    container.innerHTML = `
+      <div class="page-editor-back">
+        <button class="btn btn-sm btn-secondary" onclick="adminPanel.backToPageCards()">
+          <i class="fas fa-arrow-left"></i> All Pages
+        </button>
+        <a href="${meta.url}" target="_blank" class="btn btn-sm btn-outline">
+          <i class="fas fa-external-link-alt"></i> Preview ${meta.label}
+        </a>
+        <button class="btn btn-sm btn-primary" onclick="adminPanel.saveAllZones('${pageId}')" style="margin-left:auto;">
+          <i class="fas fa-save"></i> Save All Changes
+        </button>
+      </div>
+      <div class="page-editor-split">
+        <div class="page-editor-zones">${zonesHtml}</div>
+        <div class="page-editor-preview">
+          <div class="preview-frame-header">
+            <span><i class="fas fa-eye"></i> Live Preview</span>
+            <button class="btn btn-sm" onclick="document.getElementById('page-preview-iframe').contentWindow.location.reload()">
+              <i class="fas fa-sync-alt"></i>
+            </button>
+          </div>
+          <iframe id="page-preview-iframe" src="${meta.url}" class="preview-iframe"></iframe>
+        </div>
+      </div>`;
+
+    zones.forEach(z => { if (z.doc || z.collection) loadZoneData(pageId, z); });
+  }
+
+  function toggleZone(pageId, zoneId) {
+    const card = document.getElementById('zone-' + pageId + '-' + zoneId);
+    if (card) card.classList.toggle('open');
+  }
+
+  function goToSection(sectionId) {
+    currentEditorPage = null;
+    const link = document.querySelector('[data-section="' + sectionId + '"]');
+    if (link) link.click();
+  }
+
+  async function loadZoneData(pageId, zone) {
+    const el = document.getElementById('zone-editor-' + pageId + '-' + zone.id);
+    if (!el) return;
+
+    // Collection-type zones (testimonials, blog, services)
+    if (zone.collection) {
+      try {
+        var query = db.collection(zone.collection);
+        if (zone.collection === 'blogPosts') query = query.orderBy('date', 'desc');
+        else if (zone.collection === 'testimonials' || zone.collection === 'services') query = query.orderBy('order', 'asc');
+        var snap = await query.get();
+        var html = '<div class="zone-editor-inner">';
+
+        if (zone.collection === 'testimonials') {
+          html += '<div style="margin-bottom:0.75rem;"><button class="btn btn-sm btn-primary" onclick="adminPanel.zoneAddTestimonial()"><i class="fas fa-plus"></i> Add Testimonial</button></div>';
+          if (snap.empty) {
+            html += '<p style="color:#7A6A7B;font-size:0.88rem;">No testimonials yet.</p>';
+          } else {
+            snap.forEach(function (doc) {
+              var d = doc.data();
+              html += '<div class="admin-item"><div class="admin-item-content"><h4>' + escapeHtml(d.author || 'Unknown') + '</h4>' +
+                '<p>' + escapeHtml(truncate(d.text || '', 80)) + '</p></div>' +
+                '<div class="admin-item-actions">' +
+                '<button class="btn btn-sm btn-secondary" onclick="adminPanel.editTestimonial(\'' + doc.id + '\')"><i class="fas fa-pen"></i></button>' +
+                '<button class="btn btn-sm btn-danger" onclick="adminPanel.deleteTestimonial(\'' + doc.id + '\')"><i class="fas fa-trash"></i></button>' +
+                '</div></div>';
+            });
+          }
+        } else if (zone.collection === 'blogPosts') {
+          html += '<div style="margin-bottom:0.75rem;"><button class="btn btn-sm btn-primary" onclick="adminPanel.zoneAddBlog()"><i class="fas fa-plus"></i> New Post</button></div>';
+          if (snap.empty) {
+            html += '<p style="color:#7A6A7B;font-size:0.88rem;">No blog posts yet.</p>';
+          } else {
+            snap.forEach(function (doc) {
+              var d = doc.data();
+              html += '<div class="admin-item"><div class="admin-item-content"><h4>' + escapeHtml(d.title || 'Untitled') + '</h4>' +
+                '<p>' + escapeHtml(d.category || '') + (d.date ? ' &bull; ' + d.date : '') + '</p></div>' +
+                '<div class="admin-item-actions">' +
+                '<button class="btn btn-sm btn-secondary" onclick="adminPanel.editBlog(\'' + doc.id + '\')"><i class="fas fa-pen"></i></button>' +
+                '<button class="btn btn-sm btn-danger" onclick="adminPanel.deleteBlog(\'' + doc.id + '\')"><i class="fas fa-trash"></i></button>' +
+                '</div></div>';
+            });
+          }
+        } else if (zone.collection === 'services') {
+          html += '<div style="margin-bottom:0.75rem;"><button class="btn btn-sm btn-primary" onclick="adminPanel.zoneAddService()"><i class="fas fa-plus"></i> Add Service</button></div>';
+          if (snap.empty) {
+            html += '<p style="color:#7A6A7B;font-size:0.88rem;">No services yet.</p>';
+          } else {
+            snap.forEach(function (doc) {
+              var d = doc.data();
+              html += '<div class="admin-item"><div class="admin-item-content"><h4>' +
+                (d.icon ? '<i class="fas ' + escapeHtml(d.icon) + '" style="margin-right:0.4rem;color:#6B2D5B;"></i>' : '') +
+                escapeHtml(d.title || 'Untitled') + '</h4>' +
+                '<p>' + escapeHtml(truncate(d.short || d.description || '', 60)) + '</p></div>' +
+                '<div class="admin-item-actions">' +
+                '<button class="btn btn-sm btn-secondary" onclick="adminPanel.editService(\'' + doc.id + '\')"><i class="fas fa-pen"></i></button>' +
+                '<button class="btn btn-sm btn-danger" onclick="adminPanel.deleteService(\'' + doc.id + '\')"><i class="fas fa-trash"></i></button>' +
+                '</div></div>';
+            });
+          }
+        }
+        html += '</div>';
+        el.innerHTML = html;
+      } catch (err) {
+        el.innerHTML = '<div class="zone-editor-inner"><p style="color:#C0392B;">Error loading data.</p></div>';
+        console.error('Collection zone error:', err);
+      }
+      return;
+    }
+
+    try {
+      const snap = await db.doc(zone.doc).get();
+      const data = snap.exists ? snap.data() : {};
+      let html = '<div class="zone-editor-inner">';
+
+      if (zone.listField) {
+        html += renderZoneList(pageId, zone.id, data[zone.listField] || []);
+      } else if (zone.hoursEditor) {
+        html += renderZoneHours(pageId, zone.id, data.hours || []);
+      } else if (zone.fields) {
+        html += renderZoneFields(pageId, zone.id, zone.fields, data);
+      }
+
+      html += '<div class="zone-save-row">' +
+        '<button class="btn btn-primary btn-sm" onclick="adminPanel.saveZone(\'' + pageId + '\',\'' + zone.id + '\')">' +
+        '<i class="fas fa-save"></i> Save</button></div></div>';
+      el.innerHTML = html;
+    } catch (err) {
+      el.innerHTML = '<div class="zone-editor-inner"><p style="color:#C0392B;">Error loading data. Try refreshing.</p></div>';
+      console.error('Zone load error:', err);
+    }
+  }
+
+  function renderZoneFields(pageId, zoneId, fields, data) {
+    return fields.map(function (f) {
+      var value = '';
+      if (f.key.indexOf('.') !== -1) {
+        var parts = f.key.split('.');
+        value = data[parts[0]] ? (data[parts[0]][parts[1]] || '') : '';
+      } else if (f.isArray && Array.isArray(data[f.key])) {
+        value = data[f.key].join('\n');
+      } else {
+        value = data[f.key] || '';
+      }
+      var escaped = escapeHtml(value);
+      var inputId = 'ze-' + pageId + '-' + zoneId + '-' + f.key.replace(/\./g, '-');
+
+      if (f.type === 'textarea') {
+        return '<div class="form-group"><label>' + f.label + '</label>' +
+          '<textarea class="form-control" id="' + inputId + '" rows="4" placeholder="' + (f.placeholder || '') + '">' + escaped + '</textarea></div>';
+      }
+      return '<div class="form-group"><label>' + f.label + '</label>' +
+        '<input type="text" class="form-control" id="' + inputId + '" value="' + escaped + '" placeholder="' + (f.placeholder || '') + '"></div>';
+    }).join('');
+  }
+
+  function renderZoneList(pageId, zoneId, items) {
+    var listId = 'ze-list-' + pageId + '-' + zoneId;
+    var arr = items.length ? items : [''];
+    var rows = arr.map(function (item) {
+      return '<div class="feature-row"><input type="text" class="form-control" value="' + escapeHtml(item) + '">' +
+        '<button onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button></div>';
+    }).join('');
+    return '<div id="' + listId + '" class="features-list">' + rows + '</div>' +
+      '<button class="btn btn-sm btn-secondary" style="margin-top:0.5rem;" onclick="adminPanel.addZoneListRow(\'' + listId + '\')">' +
+      '<i class="fas fa-plus"></i> Add Item</button>';
+  }
+
+  function renderZoneHours(pageId, zoneId, hours) {
+    var days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    var hoursMap = {};
+    (hours || []).forEach(function (h) { hoursMap[h.day] = h.hours; });
+    return '<div class="hours-editor">' + days.map(function (day) {
+      return '<div class="hours-row"><label>' + day + '</label>' +
+        '<input type="text" class="form-control" data-ze-day="' + day + '" value="' + escapeHtml(hoursMap[day] || '') + '" placeholder="e.g., 9:00 AM - 5:00 PM"></div>';
+    }).join('') + '</div>';
+  }
+
+  function addZoneListRow(listId) {
+    var list = document.getElementById(listId);
+    if (!list) return;
+    var row = document.createElement('div');
+    row.className = 'feature-row';
+    row.innerHTML = '<input type="text" class="form-control" value=""><button onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>';
+    list.appendChild(row);
+    row.querySelector('input').focus();
+  }
+
+  async function saveZone(pageId, zoneId) {
+    var zone = PAGE_ZONES[pageId].find(function (z) { return z.id === zoneId; });
+    if (!zone || !zone.doc) return;
+
+    try {
+      var updateData = {};
+
+      if (zone.listField) {
+        var listId = 'ze-list-' + pageId + '-' + zoneId;
+        var listEl = document.getElementById(listId);
+        var items = [];
+        if (listEl) {
+          listEl.querySelectorAll('.feature-row input').forEach(function (inp) {
+            var v = inp.value.trim();
+            if (v) items.push(v);
+          });
+        }
+        updateData[zone.listField] = items;
+      } else if (zone.hoursEditor) {
+        var hours = [];
+        document.querySelectorAll('#zone-editor-' + pageId + '-' + zoneId + ' [data-ze-day]').forEach(function (inp) {
+          hours.push({ day: inp.dataset.zeDay, hours: inp.value.trim() });
+        });
+        updateData.hours = hours;
+      } else if (zone.fields) {
+        zone.fields.forEach(function (f) {
+          var inputId = 'ze-' + pageId + '-' + zoneId + '-' + f.key.replace(/\./g, '-');
+          var el = document.getElementById(inputId);
+          if (!el) return;
+          var value = el.value.trim();
+          if (f.isArray) {
+            value = value.split('\n').map(function (s) { return s.trim(); }).filter(Boolean);
+          }
+          if (f.key.indexOf('.') !== -1) {
+            var parts = f.key.split('.');
+            if (!updateData[parts[0]]) updateData[parts[0]] = {};
+            updateData[parts[0]][parts[1]] = value;
+          } else {
+            updateData[f.key] = value;
+          }
+        });
+      }
+
+      await db.doc(zone.doc).set(updateData, { merge: true });
+      showToast('Saved successfully!', 'success');
+
+      // Refresh live preview
+      var iframe = document.getElementById('page-preview-iframe');
+      if (iframe) {
+        try { iframe.contentWindow.location.reload(); } catch (_) {}
+      }
+    } catch (err) {
+      showToast('Error saving: ' + err.message, 'error');
+      console.error('Zone save error:', err);
+    }
+  }
+
+  // Zone wrappers — open existing modals from the Page Editor
+  function zoneAddTestimonial() { openTestimonialModal(null); }
+  function zoneAddBlog() { openBlogModal(null); }
+  function zoneAddService() { openServiceModal(null); }
+
+  // Refresh collection zones after modal save (override close behavior)
+  function refreshCollectionZones() {
+    if (!currentEditorPage) return;
+    var zones = PAGE_ZONES[currentEditorPage];
+    if (!zones) return;
+    zones.forEach(function (z) {
+      if (z.collection) loadZoneData(currentEditorPage, z);
+    });
+    var iframe = document.getElementById('page-preview-iframe');
+    if (iframe) { try { iframe.contentWindow.location.reload(); } catch (_) {} }
+  }
+
+  async function saveAllZones(pageId) {
+    var zones = PAGE_ZONES[pageId];
+    if (!zones) return;
+    var saveable = zones.filter(function (z) { return z.doc && !z.navTo; });
+    if (!saveable.length) return;
+
+    // Group zones by Firestore doc to batch fields together
+    var docUpdates = {};
+    saveable.forEach(function (zone) {
+      if (!docUpdates[zone.doc]) docUpdates[zone.doc] = {};
+      var update = docUpdates[zone.doc];
+
+      if (zone.listField) {
+        var listId = 'ze-list-' + pageId + '-' + zone.id;
+        var listEl = document.getElementById(listId);
+        var items = [];
+        if (listEl) {
+          listEl.querySelectorAll('.feature-row input').forEach(function (inp) {
+            var v = inp.value.trim();
+            if (v) items.push(v);
+          });
+        }
+        update[zone.listField] = items;
+      } else if (zone.hoursEditor) {
+        var hours = [];
+        document.querySelectorAll('#zone-editor-' + pageId + '-' + zone.id + ' [data-ze-day]').forEach(function (inp) {
+          hours.push({ day: inp.dataset.zeDay, hours: inp.value.trim() });
+        });
+        update.hours = hours;
+      } else if (zone.fields) {
+        zone.fields.forEach(function (f) {
+          var inputId = 'ze-' + pageId + '-' + zone.id + '-' + f.key.replace(/\./g, '-');
+          var el = document.getElementById(inputId);
+          if (!el) return;
+          var value = el.value.trim();
+          if (f.isArray) {
+            value = value.split('\n').map(function (s) { return s.trim(); }).filter(Boolean);
+          }
+          if (f.key.indexOf('.') !== -1) {
+            var parts = f.key.split('.');
+            if (!update[parts[0]]) update[parts[0]] = {};
+            update[parts[0]][parts[1]] = value;
+          } else {
+            update[f.key] = value;
+          }
+        });
+      }
+    });
+
+    try {
+      var promises = Object.keys(docUpdates).map(function (docPath) {
+        return db.doc(docPath).set(docUpdates[docPath], { merge: true });
+      });
+      await Promise.all(promises);
+      showToast('All changes saved!', 'success');
+      var iframe = document.getElementById('page-preview-iframe');
+      if (iframe) {
+        try { iframe.contentWindow.location.reload(); } catch (_) {}
+      }
+    } catch (err) {
+      showToast('Error saving: ' + err.message, 'error');
+      console.error('Save all error:', err);
+    }
+  }
+
   // ---- Wire Up Event Listeners ----
   function setupEventListeners() {
     document.getElementById('add-blog-btn').addEventListener('click', () => openBlogModal(null));
@@ -1741,6 +2868,11 @@
     document.getElementById('save-about-btn').addEventListener('click', saveAbout);
     document.getElementById('save-settings-btn').addEventListener('click', saveSettings);
     document.getElementById('import-config-btn').addEventListener('click', importFromConfig);
+
+    // Theme & Colors
+    document.getElementById('save-theme-btn').addEventListener('click', saveTheme);
+    document.getElementById('reset-theme-btn').addEventListener('click', resetTheme);
+    setupThemeColorSync();
 
     // Homepage
     document.getElementById('save-homepage-btn').addEventListener('click', saveHomepage);
@@ -1825,7 +2957,17 @@
     deletePatient,
     editNote,
     deleteNote,
-    emailNote
+    emailNote,
+    selectEditorPage,
+    backToPageCards,
+    toggleZone,
+    goToSection,
+    saveZone,
+    saveAllZones,
+    addZoneListRow,
+    zoneAddTestimonial,
+    zoneAddBlog,
+    zoneAddService
   };
 
 })();

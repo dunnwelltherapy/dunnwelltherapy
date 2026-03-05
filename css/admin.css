@@ -1090,6 +1090,277 @@ select.form-control {
   border-color: #6B2D5B;
 }
 
+/* === THEME & COLORS === */
+.theme-preview-bar {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(91,34,69,0.06);
+}
+.theme-swatch {
+  flex: 1;
+  height: 40px;
+  border-radius: 10px;
+  border: 2px solid rgba(0,0,0,0.08);
+  transition: all 0.3s;
+}
+.theme-color-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.25rem;
+}
+.theme-color-item {
+  padding: 1rem;
+  background: #FDFAFD;
+  border-radius: 12px;
+  border: 1px solid #F3E8F3;
+}
+.theme-color-item label {
+  display: block;
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: #2D1B2E;
+  margin-bottom: 0.2rem;
+}
+.theme-color-item > p {
+  font-size: 0.78rem;
+  color: #7A6A7B;
+  margin: 0 0 0.75rem;
+}
+.color-input-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.color-input-row input[type="color"] {
+  width: 44px;
+  height: 44px;
+  border: 2px solid #E4D0E4;
+  border-radius: 10px;
+  padding: 2px;
+  cursor: pointer;
+  background: #fff;
+  flex-shrink: 0;
+}
+.color-input-row input[type="color"]::-webkit-color-swatch-wrapper { padding: 2px; }
+.color-input-row input[type="color"]::-webkit-color-swatch { border-radius: 6px; border: none; }
+.color-hex {
+  font-family: 'Inter', monospace;
+  font-size: 0.88rem !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Border / radius controls */
+.border-input-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.border-input-row input[type="range"] {
+  flex: 1;
+  accent-color: #6B2D5B;
+  height: 6px;
+}
+.border-input-row .border-val {
+  font-family: 'Inter', monospace;
+  font-size: 0.85rem !important;
+  text-align: center;
+}
+
+/* === PAGE EDITOR === */
+.page-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.25rem;
+}
+.page-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 12px rgba(91,34,69,0.06);
+  cursor: pointer;
+  transition: all 0.25s;
+  position: relative;
+  border: 2px solid transparent;
+}
+.page-card:hover {
+  border-color: #E4D0E4;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(91,34,69,0.12);
+}
+.page-card-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 1.4rem;
+  margin-bottom: 1rem;
+}
+.page-card h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.15rem;
+  color: #2D1B2E;
+  margin-bottom: 0.3rem;
+}
+.page-card p {
+  font-size: 0.85rem;
+  color: #7A6A7B;
+  margin: 0;
+}
+.page-card-arrow {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  color: #C9A0C9;
+  font-size: 1rem;
+  transition: transform 0.2s;
+}
+.page-card:hover .page-card-arrow { transform: translateX(4px); }
+
+/* Page editor back bar + split layout */
+.page-editor-back {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+.page-editor-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+.page-editor-zones {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Live preview iframe */
+.page-editor-preview {
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(91,34,69,0.06);
+  position: sticky;
+  top: 2rem;
+}
+.preview-frame-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: #F3E8F3;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #6B2D5B;
+}
+.preview-frame-header span { display: flex; align-items: center; gap: 0.4rem; }
+.preview-iframe {
+  width: 100%;
+  height: 600px;
+  border: none;
+  display: block;
+}
+
+/* Zone cards */
+.zone-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(91,34,69,0.05);
+  overflow: hidden;
+  border: 1px solid #F3E8F3;
+  transition: border-color 0.2s;
+}
+.zone-card:hover { border-color: #E4D0E4; }
+.zone-card.open { border-color: #C9A0C9; }
+.zone-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.zone-card-header:hover { background: #FDFAFD; }
+.zone-card-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.zone-card-info > i {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #F3E8F3;
+  border-radius: 10px;
+  color: #6B2D5B;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+.zone-card-info h4 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #2D1B2E;
+  margin-bottom: 0.1rem;
+  font-family: inherit;
+}
+.zone-card-info p { font-size: 0.8rem; color: #7A6A7B; margin: 0; }
+.zone-toggle-icon {
+  color: #C9A0C9;
+  font-size: 0.8rem;
+  transition: transform 0.3s;
+}
+.zone-card.open .zone-toggle-icon { transform: rotate(180deg); }
+.zone-card-action {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #6B2D5B;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.zone-card-editor {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease;
+}
+.zone-card.open .zone-card-editor { max-height: 2000px; }
+.zone-editor-inner {
+  padding: 0 1.25rem 1.25rem;
+  border-top: 1px solid #F3E8F3;
+  padding-top: 1.25rem;
+}
+.zone-editor-inner .form-group { margin-bottom: 1rem; }
+.zone-save-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+}
+.zone-loading {
+  padding: 1.5rem;
+  text-align: center;
+  color: #7A6A7B;
+  font-size: 0.88rem;
+}
+.zone-nav { cursor: pointer; }
+.zone-nav:hover { border-color: #6B2D5B; }
+
+@media (max-width: 1024px) {
+  .page-editor-split { grid-template-columns: 1fr; }
+  .page-editor-preview { order: -1; }
+  .preview-iframe { height: 400px; }
+}
+
 @media (max-width: 768px) {
   .admin-mobile-toggle { display: flex; }
   .admin-sidebar {
