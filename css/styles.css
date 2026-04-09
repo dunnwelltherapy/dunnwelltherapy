@@ -628,10 +628,14 @@ p  { margin-bottom: 1rem; }
   margin: 0 auto;
   border-radius: var(--radius-lg);
   overflow: hidden;
-  background: transparent;
+  background: #000;
+  aspect-ratio: 9 / 14;
+  position: relative;
 }
 .video-testimonial video {
   width: 100%;
+  height: 100%;
+  object-fit: cover;
   display: block;
 }
 .about-content h2 { margin-bottom: 0.5rem; }

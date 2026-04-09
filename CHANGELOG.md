@@ -376,6 +376,48 @@ Created `HANDOFF-GUIDE.md` — a 600+ line, 20-section guide written in plain la
 - Clinical notes documentation
 - All credentials and keys in one place
 
+### 21. SMS Notification on Booking (Apr 8, 2026)
+
+Added instant text message notification when someone books a consultation or submits the contact form.
+
+- Updated Google Apps Script to send SMS via T-Mobile email-to-SMS gateway (`7864793593@tmomail.net`)
+- Booking form: email to care@dunnwelltherapy.com + SMS + Google Calendar event + client confirmation email
+- Contact form: email to care@dunnwelltherapy.com + SMS
+- Apps Script handles both booking and contact submissions (differentiated by `type` field)
+
+Files modified: `apps-script-code.js` (Google Apps Script — deployed via script.google.com)
+
+### 22. Contact Form Fixed (Apr 8, 2026)
+
+Replaced broken EmailJS integration with Google Apps Script routing. Contact form now reliably sends email and SMS without requiring EmailJS setup.
+
+- Removed EmailJS dependency and mailto fallback from contact.js
+- Contact form now posts to the same Apps Script as the booking form
+- Apps Script differentiates between booking (`type: undefined`) and contact (`type: "contact"`) submissions
+
+Files modified: `js/contact.js`
+
+### 23. Third Video Testimonial Added (Apr 8, 2026)
+
+Added third video testimonial to the homepage "Real Families. Real Stories." section.
+
+- New file: `images/testimonial-video-3.mp4` (compressed from 132MB to 19MB via ffmpeg)
+- Video grid updated from 2-column to 3-column layout
+- Fixed `main.js` dynamic video rendering — was overwriting hardcoded HTML with only Firestore videos. Now always renders 3 hardcoded videos plus any Firestore additions.
+- All videos styled with uniform portrait aspect ratio (9:14), black background, `object-fit: cover`, and rounded corners
+
+Files modified: `index.html`, `js/main.js`, `css/styles.css`
+
+### 24. Watermark Image Replaced (Apr 8, 2026)
+
+Replaced watermarked stock photo in "Who We Help" section with clean image of kids playing outdoors.
+
+- Old: `images/children-playing.png` (had visible watermark)
+- New: `images/children-playing.jpg` (clean, no watermark)
+- Updated image reference in `index.html` from `.png` to `.jpg`
+
+Files modified: `index.html`, `images/children-playing.jpg` (new)
+
 ---
 
 ## Config-Driven Content (`js/config.js`)
@@ -432,6 +474,8 @@ All site content is managed from a single file. To update the website, edit `con
 ### Live Site
 - **Production URL:** https://dunnwelltherapy.com
 - **Hosted on:** Vercel (free tier)
+- **Vercel Project:** `website` under `dunnwelltherapys-projects` scope
+- **Vercel Dashboard:** https://vercel.com/dunnwelltherapys-projects
 - **GitHub Repo:** https://github.com/dunnwelltherapy/dunnwelltherapy
 
 ### Domain & DNS (Squarespace)
@@ -447,7 +491,7 @@ Google Workspace email records (MX, TXT/SPF, DKIM) are also configured and shoul
 ### How to Redeploy After Changes
 ```bash
 cd "/Volumes/Willie Extr/Bianca Dunn/website"
-vercel --prod
+npx vercel --prod --yes --scope dunnwelltherapys-projects
 ```
 
 ### How to Push Changes to GitHub

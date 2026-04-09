@@ -355,11 +355,21 @@ function renderTestimonials() {
   `).join('');
 
   // Render video testimonials dynamically
+  // Always include the 3 hardcoded videos plus any from Firestore
   const videoContainer = document.getElementById('video-testimonials-container');
-  if (videoContainer && SITE_CONFIG.videoTestimonials && SITE_CONFIG.videoTestimonials.length > 0) {
-    const cols = SITE_CONFIG.videoTestimonials.length === 1 ? '1fr' : '1fr 1fr';
+  if (videoContainer) {
+    const hardcodedVideos = [
+      { url: 'images/testimonial-video.mp4' },
+      { url: 'images/testimonial-video-2.mp4' },
+      { url: 'images/testimonial-video-3.mp4' }
+    ];
+    const firestoreVideos = (SITE_CONFIG.videoTestimonials || []).filter(v =>
+      v.url && !v.url.includes('testimonial-video.mp4') && !v.url.includes('testimonial-video-2.mp4') && !v.url.includes('testimonial-video-3.mp4')
+    );
+    const allVideos = [...hardcodedVideos, ...firestoreVideos];
+    const cols = allVideos.length === 1 ? '1fr' : allVideos.length === 2 ? '1fr 1fr' : 'repeat(3, 1fr)';
     videoContainer.style.gridTemplateColumns = cols;
-    videoContainer.innerHTML = SITE_CONFIG.videoTestimonials.map(v => `
+    videoContainer.innerHTML = allVideos.map(v => `
       <div class="video-testimonial">
         <video controls preload="auto" playsinline>
           <source src="${v.url}#t=0.1" type="video/mp4">
@@ -367,8 +377,6 @@ function renderTestimonials() {
       </div>
     `).join('');
     videoContainer.style.display = 'grid';
-  } else if (videoContainer && (!SITE_CONFIG.videoTestimonials || SITE_CONFIG.videoTestimonials.length === 0)) {
-    videoContainer.style.display = 'none';
   }
 
   initScrollEffects();
