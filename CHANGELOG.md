@@ -381,8 +381,9 @@ Created `HANDOFF-GUIDE.md` — a 600+ line, 20-section guide written in plain la
 Added instant text message notification when someone books a consultation or submits the contact form.
 
 - Updated Google Apps Script to send SMS via T-Mobile email-to-SMS gateway (`7864793593@tmomail.net`)
-- Booking form: email to care@dunnwelltherapy.com + SMS + Google Calendar event + client confirmation email
-- Contact form: email to care@dunnwelltherapy.com + SMS
+- Booking form: email to care@dunnwelltherapy.com + Google Calendar event + client confirmation email
+- Contact form: email to care@dunnwelltherapy.com
+- SMS notification attempted via T-Mobile and Google Voice gateways but removed (unreliable delivery)
 - Apps Script handles both booking and contact submissions (differentiated by `type` field)
 
 Files modified: `apps-script-code.js` (Google Apps Script — deployed via script.google.com)
