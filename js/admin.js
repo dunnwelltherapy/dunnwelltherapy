@@ -1050,22 +1050,49 @@
 
   // ---- Image Upload Helper ----
   async function uploadImage(file, path) {
-    if (!storage) throw new Error('Firebase Storage not initialized');
-    if (!auth.currentUser) throw new Error('Not authenticated — please sign in again');
+    if (!file) throw new Error('No file selected');
     const ext = file.name.split('.').pop().toLowerCase();
     if (!['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) throw new Error('Unsupported image format: ' + ext);
     if (file.size > 5 * 1024 * 1024) throw new Error('Image too large (max 5MB)');
-    const ref = storage.ref('images/' + path + '.' + ext);
-    try {
-      const snap = await ref.put(file, { contentType: file.type || 'image/' + ext });
-      return await snap.ref.getDownloadURL();
-    } catch (e) {
-      console.error('Storage upload error:', e.code, e.message);
-      if (e.code === 'storage/unauthorized' || e.code === 'storage/unauthenticated') {
-        throw new Error('Storage permission denied. Please update Firebase Storage rules to allow authenticated writes.');
+
+    // Try Firebase Storage first
+    if (storage) {
+      try {
+        const ref = storage.ref('images/' + path + '.' + ext);
+        const snap = await ref.put(file, { contentType: file.type || 'image/' + ext });
+        return await snap.ref.getDownloadURL();
+      } catch (e) {
+        console.warn('Storage upload failed, falling back to inline image:', e.message);
       }
-      throw e;
     }
+
+    // Fallback: compress and store as data URL in Firestore
+    return await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const maxW = 800, maxH = 600;
+          let w = img.width, h = img.height;
+          if (w > maxW) { h = h * maxW / w; w = maxW; }
+          if (h > maxH) { w = w * maxH / h; h = maxH; }
+          canvas.width = w;
+          canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+          if (dataUrl.length > 900000) {
+            reject(new Error('Image too large even after compression. Try a smaller image.'));
+          } else {
+            resolve(dataUrl);
+          }
+        };
+        img.onerror = () => reject(new Error('Could not read image'));
+        img.src = e.target.result;
+      };
+      reader.onerror = () => reject(new Error('Could not read file'));
+      reader.readAsDataURL(file);
+    });
   }
 
   // ---- Import from Config ----
