@@ -126,6 +126,7 @@ function showSinglePost(postId) {
       <span><i class="fas fa-calendar-alt"></i> ${formattedDate}</span>
       <span><i class="fas fa-user"></i> ${post.author}</span>
     </div>
+    ${post.image ? '<img src="' + post.image + '" alt="' + post.title + '" style="width:100%;max-height:400px;object-fit:cover;border-radius:12px;margin-bottom:2rem;" loading="lazy">' : ''}
     <div class="divider" style="margin: 0 0 2rem;"></div>
     ${post.content}
     <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--mauve-light);">

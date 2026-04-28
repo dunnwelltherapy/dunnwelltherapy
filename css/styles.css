@@ -920,6 +920,11 @@ select.form-control {
   color: var(--plum-light);
   opacity: 0.5;
 }
+.blog-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 .blog-card-body { padding: 2rem; }
 .blog-card-meta {
   display: flex;

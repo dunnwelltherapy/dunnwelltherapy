@@ -243,6 +243,7 @@
   }
 
   async function saveBlogPost() {
+    const saveBtn = document.getElementById('save-blog-btn');
     const docId = document.getElementById('blog-edit-id').value;
     const title = document.getElementById('blog-title').value.trim();
     const category = document.getElementById('blog-category').value.trim();
@@ -251,6 +252,10 @@
       showToast('Title and category are required.', 'error');
       return;
     }
+
+    // Disable button and show loading
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
 
     const content = quillEditor.root.innerHTML;
     const slug = docId || title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -263,7 +268,7 @@
       author: document.getElementById('blog-author').value.trim() || 'Bianca Dunn, MSOT, OTR/L',
       excerpt: document.getElementById('blog-excerpt').value.trim(),
       content: content,
-      image: document.getElementById('blog-image-preview-img').src || '',
+      image: '',
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
 
@@ -271,10 +276,20 @@
     const fileInput = document.getElementById('blog-image-file');
     if (fileInput.files.length > 0) {
       try {
+        showToast('Uploading image...', 'success');
         const url = await uploadImage(fileInput.files[0], 'blog/' + slug);
         postData.image = url;
       } catch (e) {
         showToast('Image upload failed: ' + e.message, 'error');
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Post';
+        return;
+      }
+    } else {
+      // Keep existing image URL if editing (not the base64 preview)
+      const existingImg = document.getElementById('blog-image-preview-img').src;
+      if (existingImg && existingImg.startsWith('http')) {
+        postData.image = existingImg;
       }
     }
 
@@ -291,6 +306,9 @@
       refreshCollectionZones();
     } catch (e) {
       showToast('Save failed: ' + e.message, 'error');
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Post';
     }
   }
 

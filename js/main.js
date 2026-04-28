@@ -400,7 +400,7 @@ function renderBlogCard(post) {
 
   return `
     <div class="blog-card fade-up" data-category="${post.category}">
-      <div class="blog-card-image"><i class="fas fa-newspaper"></i></div>
+      <div class="blog-card-image">${post.image ? '<img src="' + post.image + '" alt="' + post.title + '" loading="lazy">' : '<i class="fas fa-newspaper"></i>'}</div>
       <div class="blog-card-body">
         <span class="blog-category">${post.category}</span>
         <div class="blog-card-meta">
