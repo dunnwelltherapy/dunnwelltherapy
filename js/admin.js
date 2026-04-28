@@ -277,16 +277,11 @@
     if (fileInput.files.length > 0) {
       try {
         showToast('Processing image...', 'success');
-        // Timeout after 15 seconds
-        const uploadPromise = uploadImage(fileInput.files[0], 'blog/' + slug);
-        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Image processing timed out')), 15000));
-        const url = await Promise.race([uploadPromise, timeoutPromise]);
+        const url = await uploadImage(fileInput.files[0], 'blog/' + slug);
         postData.image = url;
-        showToast('Image ready!', 'success');
       } catch (e) {
         console.error('Image upload error:', e);
         showToast('Image failed: ' + e.message + '. Saving without image.', 'error');
-        // Save without image instead of blocking
       }
     } else {
       // Keep existing image URL if editing (not the base64 preview)
@@ -1069,34 +1064,41 @@
       }
     }
 
-    // Fallback: use createObjectURL + canvas (avoids data URL size issues with img.src)
+    // Fallback: read file as data URL and store directly in Firestore
+    // If file is large, compress via canvas first
     return await new Promise((resolve, reject) => {
-      const objectUrl = URL.createObjectURL(file);
-      const img = document.createElement('img');
-      img.onload = () => {
-        try {
-          const canvas = document.createElement('canvas');
-          const maxW = 500, maxH = 350;
-          let w = img.naturalWidth, h = img.naturalHeight;
-          if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
-          if (h > maxH) { w = Math.round(w * maxH / h); h = maxH; }
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = reader.result;
+        console.log('Raw image size:', Math.round(dataUrl.length / 1024) + 'KB');
+        // If small enough, use directly
+        if (dataUrl.length < 800000) {
+          resolve(dataUrl);
+          return;
+        }
+        // Too large — compress via canvas
+        var img = new window.Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = function() {
+          var canvas = document.createElement('canvas');
+          var w = Math.min(img.width, 500);
+          var h = Math.round(img.height * (w / img.width));
           canvas.width = w;
           canvas.height = h;
           canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-          URL.revokeObjectURL(objectUrl);
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.45);
-          console.log('Compressed image:', Math.round(dataUrl.length / 1024) + 'KB');
+          var compressed = canvas.toDataURL('image/jpeg', 0.4);
+          console.log('Compressed to:', Math.round(compressed.length / 1024) + 'KB');
+          resolve(compressed);
+        };
+        img.onerror = function() {
+          // Canvas failed — just use raw (may fail on Firestore size limit)
+          console.warn('Canvas compression failed, using raw');
           resolve(dataUrl);
-        } catch (e) {
-          URL.revokeObjectURL(objectUrl);
-          reject(new Error('Compression failed'));
-        }
+        };
+        img.src = dataUrl;
       };
-      img.onerror = () => {
-        URL.revokeObjectURL(objectUrl);
-        reject(new Error('Could not load image'));
-      };
-      img.src = objectUrl;
+      reader.onerror = () => reject(new Error('Could not read file'));
+      reader.readAsDataURL(file);
     });
   }
 
