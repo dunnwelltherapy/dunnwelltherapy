@@ -93,7 +93,8 @@ Your website needs to live somewhere on the internet so people can visit it. Her
 - **What it is:** A free service that stores your website files and serves them to visitors
 - **Website address:** dunnwelltherapy.com points to Vercel
 - **Cost:** Free
-- **There is NO Vercel login or dashboard.** Everything is done through the Terminal command line (explained in Section 5). When you want to update the live site, you type a command and Vercel handles the rest.
+- **Vercel Dashboard:** https://vercel.com/dunnwelltherapys-projects (project name: `website`)
+- When you want to update the live site, you type a command in Terminal and Vercel handles the rest.
 
 ### GitHub (where the code is backed up)
 - **What it is:** An online backup of all your website code. Think of it like Google Drive, but for code
@@ -662,7 +663,9 @@ Name the new file **exactly the same** as the old one, put it in the `images/` f
 | **EmailJS** | Contact form emails | https://www.emailjs.com |
 | **Domain Registrar** | dunnwelltherapy.com domain | Wherever the domain was purchased |
 
-**There is NO Vercel account.** Deployments happen via Terminal command (Section 16).
+| **Vercel** | Website hosting | https://vercel.com/dunnwelltherapys-projects |
+
+Vercel deployments happen via Terminal command (Section 16).
 
 ### How to create a new admin user:
 1. Go to https://console.firebase.google.com → Sign in → Click **dunnwelltherapy**
@@ -775,9 +778,9 @@ git push origin main
 
 **Step 6 — Make it live:**
 ```
-npx vercel --prod --yes
+npx vercel --prod --yes --scope dunnwelltherapys-projects
 ```
-*Uploads to the live website. When you see `Aliased: https://dunnwelltherapy.com` — it's done!*
+*Uploads to the live website. When you see `Aliased:` followed by a URL — it's done!*
 
 ### Common errors:
 - **"fatal: not a git repository"** → Run the `cd` command from Step 1 first. Make sure the drive is plugged in.
@@ -918,5 +921,17 @@ Add `sudo` before the command (e.g., `sudo npm install -g vercel`). Type your Ma
 
 ---
 
-*Last updated: March 4, 2026 — Added Page Editor, Theme & Colors, Page Names, borders/corners documentation*
+*Last updated: April 28, 2026 — Blog image upload fix, featured image display on blog cards*
+
+### Recent Updates (April 2026)
+
+**Blog Image Uploads Now Work Without Firebase Storage**
+- When you add a featured image to a blog post in the admin panel, it gets compressed and stored directly in the database
+- No need to set up Firebase Storage or upgrade to the Blaze plan
+- Supported formats: JPG, PNG, GIF, WebP (max 5MB)
+- If the image fails to process, the post still saves without the image
+
+**Blog Cards Show Featured Images**
+- Blog posts on the blog page and homepage now display the featured image you uploaded
+- If no image is set, it shows the default newspaper icon placeholder
 *Created by Willie Austin with Claude Code*

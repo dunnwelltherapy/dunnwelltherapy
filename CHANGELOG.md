@@ -489,6 +489,30 @@ Domain DNS is managed through Squarespace. The following custom records point to
 
 Google Workspace email records (MX, TXT/SPF, DKIM) are also configured and should not be modified.
 
+### 22. Blog Image Upload Fix (April 28, 2026)
+
+- Fixed blog post save hanging when uploading a featured image
+- Root cause: Firebase Storage is not set up on the project, so `storage.ref().put()` hangs forever (never resolves or rejects)
+- Solution: Added 5-second timeout on Storage upload attempt, then falls back to storing the image as a compressed data URL directly in Firestore
+- Images are read via `FileReader.readAsDataURL()` and stored inline in the blog post document
+- Works without any Firebase Storage setup — no Blaze plan needed
+- Added file type validation (jpg, jpeg, png, gif, webp only)
+- Added file size validation (max 5MB)
+- Added error logging to console for debugging
+- Save button now shows spinner and disables during save
+- If image processing fails, post saves without image (doesn't block)
+
+### 21. Blog Image Display Fix (April 27, 2026)
+
+- Blog cards on the blog page and homepage now display featured images when available
+- Previously all cards showed a placeholder icon regardless of image data
+- Updated `renderBlogCard()` in `main.js` to render `<img>` tag when `post.image` exists
+- Updated single post view in `blog.js` to show featured image at top of article
+- Added CSS for `.blog-card-image img` with `object-fit: cover` for proper display
+- Falls back to newspaper icon placeholder when no image is set
+
+---
+
 ### How to Redeploy After Changes
 ```bash
 cd "/Volumes/Willie Extr/Bianca Dunn/website"
