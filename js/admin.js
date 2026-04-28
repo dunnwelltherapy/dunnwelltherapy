@@ -1069,49 +1069,34 @@
       }
     }
 
-    // Fallback: compress via canvas and store as data URL in Firestore
+    // Fallback: use createObjectURL + canvas (avoids data URL size issues with img.src)
     return await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (evt) => {
+      const objectUrl = URL.createObjectURL(file);
+      const img = document.createElement('img');
+      img.onload = () => {
         try {
-          const img = document.createElement('img');
-          img.onload = () => {
-            try {
-              const canvas = document.createElement('canvas');
-              const maxW = 600, maxH = 400;
-              let w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
-              if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
-              if (h > maxH) { w = Math.round(w * maxH / h); h = maxH; }
-              canvas.width = w;
-              canvas.height = h;
-              const ctx = canvas.getContext('2d');
-              ctx.drawImage(img, 0, 0, w, h);
-              const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
-              console.log('Compressed image size:', Math.round(dataUrl.length / 1024) + 'KB');
-              if (dataUrl.length > 500000) {
-                // Try even smaller
-                canvas.width = Math.round(w * 0.5);
-                canvas.height = Math.round(h * 0.5);
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                const smaller = canvas.toDataURL('image/jpeg', 0.4);
-                console.log('Re-compressed:', Math.round(smaller.length / 1024) + 'KB');
-                resolve(smaller);
-              } else {
-                resolve(dataUrl);
-              }
-            } catch (canvasErr) {
-              console.error('Canvas error:', canvasErr);
-              reject(new Error('Could not compress image'));
-            }
-          };
-          img.onerror = () => reject(new Error('Could not load image for compression'));
-          img.src = evt.target.result;
-        } catch (imgErr) {
-          reject(new Error('Image processing failed'));
+          const canvas = document.createElement('canvas');
+          const maxW = 500, maxH = 350;
+          let w = img.naturalWidth, h = img.naturalHeight;
+          if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
+          if (h > maxH) { w = Math.round(w * maxH / h); h = maxH; }
+          canvas.width = w;
+          canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          URL.revokeObjectURL(objectUrl);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.45);
+          console.log('Compressed image:', Math.round(dataUrl.length / 1024) + 'KB');
+          resolve(dataUrl);
+        } catch (e) {
+          URL.revokeObjectURL(objectUrl);
+          reject(new Error('Compression failed'));
         }
       };
-      reader.onerror = () => reject(new Error('Could not read file'));
-      reader.readAsDataURL(file);
+      img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error('Could not load image'));
+      };
+      img.src = objectUrl;
     });
   }
 
