@@ -574,8 +574,8 @@ If Firebase ever goes down (rare), the website automatically uses backup content
 When someone submits the booking form, an event appears on Bianca's Google Calendar automatically.
 
 ### Credentials:
-- **API Key:** `AIzaSyBR05wTUI6F6Pn8KFS4_girzlztDQk08fA`
-- **Client ID:** `1090467909421-u5aklg5d82vvs966ck0c353ntesfek3f.apps.googleusercontent.com`
+- **API Key:** *(stored in js/config.js — do not publish publicly)*
+- **Client ID:** *(stored in js/config.js — do not publish publicly)*
 
 ### Where to manage:
 - **Google Cloud Console:** https://console.cloud.google.com
@@ -870,24 +870,21 @@ Add `sudo` before the command (e.g., `sudo npm install -g vercel`). Type your Ma
 
 ## 20. ALL CREDENTIALS AND KEYS IN ONE PLACE
 
-### Firebase
-| Item | Value |
-|---|---|
-| Project ID | `dunnwelltherapy` |
-| API Key | `AIzaSyBI-DVKipZJ38ZHiFRG3LvD0U4kAAcPa-g` |
-| Auth Domain | `dunnwelltherapy.firebaseapp.com` |
-| Storage Bucket | `dunnwelltherapy.firebasestorage.app` |
+> **IMPORTANT:** API keys and secrets are NOT stored in this file for security reasons.
+> All credentials are stored in their respective config files locally:
+> - Firebase: `js/firebase-config.js`
+> - Google Calendar: `js/config.js` (calendarApiKey, calendarClientId)
+> - Google Apps Script: `js/config.js` (appsScriptUrl)
+> Never commit API keys to a public Git repository.
 
-### Google Calendar
-| Item | Value |
+### Where to find credentials:
+| Item | Location |
 |---|---|
-| API Key | `AIzaSyBR05wTUI6F6Pn8KFS4_girzlztDQk08fA` |
-| Client ID | `1090467909421-u5aklg5d82vvs966ck0c353ntesfek3f.apps.googleusercontent.com` |
-
-### Google Apps Script
-| Item | Value |
-|---|---|
-| URL | `https://script.google.com/macros/s/AKfycbwQUJmmufNyo6wE4_eh5d61P0ySslX4dAhQdR6psu8Sqw_WRSp7Wujl0GtjibeL1A9Snw/exec` |
+| Firebase config | `js/firebase-config.js` |
+| Google Calendar keys | `js/config.js` → `calendarApiKey`, `calendarClientId` |
+| Apps Script URL | `js/config.js` → `appsScriptUrl` |
+| Firebase Console | https://console.firebase.google.com/project/dunnwelltherapy |
+| Google Cloud Console | https://console.cloud.google.com |
 
 ### GitHub
 | Item | Value |
