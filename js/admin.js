@@ -276,14 +276,17 @@
     const fileInput = document.getElementById('blog-image-file');
     if (fileInput.files.length > 0) {
       try {
-        showToast('Uploading image...', 'success');
-        const url = await uploadImage(fileInput.files[0], 'blog/' + slug);
+        showToast('Processing image...', 'success');
+        // Timeout after 15 seconds
+        const uploadPromise = uploadImage(fileInput.files[0], 'blog/' + slug);
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Image processing timed out')), 15000));
+        const url = await Promise.race([uploadPromise, timeoutPromise]);
         postData.image = url;
+        showToast('Image ready!', 'success');
       } catch (e) {
-        showToast('Image upload failed: ' + e.message, 'error');
-        saveBtn.disabled = false;
-        saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Post';
-        return;
+        console.error('Image upload error:', e);
+        showToast('Image failed: ' + e.message + '. Saving without image.', 'error');
+        // Save without image instead of blocking
       }
     } else {
       // Keep existing image URL if editing (not the base64 preview)
@@ -1066,29 +1069,46 @@
       }
     }
 
-    // Fallback: compress and store as data URL in Firestore
+    // Fallback: compress via canvas and store as data URL in Firestore
     return await new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const maxW = 800, maxH = 600;
-          let w = img.width, h = img.height;
-          if (w > maxW) { h = h * maxW / w; w = maxW; }
-          if (h > maxH) { w = w * maxH / h; h = maxH; }
-          canvas.width = w;
-          canvas.height = h;
-          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
-          if (dataUrl.length > 900000) {
-            reject(new Error('Image too large even after compression. Try a smaller image.'));
-          } else {
-            resolve(dataUrl);
-          }
-        };
-        img.onerror = () => reject(new Error('Could not read image'));
-        img.src = e.target.result;
+      reader.onload = (evt) => {
+        try {
+          const img = document.createElement('img');
+          img.onload = () => {
+            try {
+              const canvas = document.createElement('canvas');
+              const maxW = 600, maxH = 400;
+              let w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+              if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
+              if (h > maxH) { w = Math.round(w * maxH / h); h = maxH; }
+              canvas.width = w;
+              canvas.height = h;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0, w, h);
+              const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
+              console.log('Compressed image size:', Math.round(dataUrl.length / 1024) + 'KB');
+              if (dataUrl.length > 500000) {
+                // Try even smaller
+                canvas.width = Math.round(w * 0.5);
+                canvas.height = Math.round(h * 0.5);
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                const smaller = canvas.toDataURL('image/jpeg', 0.4);
+                console.log('Re-compressed:', Math.round(smaller.length / 1024) + 'KB');
+                resolve(smaller);
+              } else {
+                resolve(dataUrl);
+              }
+            } catch (canvasErr) {
+              console.error('Canvas error:', canvasErr);
+              reject(new Error('Could not compress image'));
+            }
+          };
+          img.onerror = () => reject(new Error('Could not load image for compression'));
+          img.src = evt.target.result;
+        } catch (imgErr) {
+          reject(new Error('Image processing failed'));
+        }
       };
       reader.onerror = () => reject(new Error('Could not read file'));
       reader.readAsDataURL(file);
