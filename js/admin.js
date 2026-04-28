@@ -1050,10 +1050,22 @@
 
   // ---- Image Upload Helper ----
   async function uploadImage(file, path) {
-    const ext = file.name.split('.').pop();
+    if (!storage) throw new Error('Firebase Storage not initialized');
+    if (!auth.currentUser) throw new Error('Not authenticated — please sign in again');
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (!['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) throw new Error('Unsupported image format: ' + ext);
+    if (file.size > 5 * 1024 * 1024) throw new Error('Image too large (max 5MB)');
     const ref = storage.ref('images/' + path + '.' + ext);
-    const snap = await ref.put(file);
-    return await snap.ref.getDownloadURL();
+    try {
+      const snap = await ref.put(file, { contentType: file.type || 'image/' + ext });
+      return await snap.ref.getDownloadURL();
+    } catch (e) {
+      console.error('Storage upload error:', e.code, e.message);
+      if (e.code === 'storage/unauthorized' || e.code === 'storage/unauthenticated') {
+        throw new Error('Storage permission denied. Please update Firebase Storage rules to allow authenticated writes.');
+      }
+      throw e;
+    }
   }
 
   // ---- Import from Config ----
