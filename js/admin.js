@@ -1053,53 +1053,32 @@
     if (!['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) throw new Error('Unsupported image format: ' + ext);
     if (file.size > 5 * 1024 * 1024) throw new Error('Image too large (max 5MB)');
 
-    // Try Firebase Storage first
+    // Try Firebase Storage first (with 5s timeout — Storage may not be set up)
     if (storage) {
       try {
-        const ref = storage.ref('images/' + path + '.' + ext);
-        const snap = await ref.put(file, { contentType: file.type || 'image/' + ext });
-        return await snap.ref.getDownloadURL();
+        var storageResult = await Promise.race([
+          (async () => {
+            var ref = storage.ref('images/' + path + '.' + ext);
+            var snap = await ref.put(file, { contentType: file.type || 'image/' + ext });
+            return await snap.ref.getDownloadURL();
+          })(),
+          new Promise(function(_, reject) { setTimeout(function() { reject(new Error('Storage timeout')); }, 5000); })
+        ]);
+        return storageResult;
       } catch (e) {
-        console.warn('Storage upload failed, falling back to inline image:', e.message);
+        console.warn('Storage failed, using inline image:', e.message);
       }
     }
 
-    // Fallback: read file as data URL and store directly in Firestore
-    // If file is large, compress via canvas first
-    return await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const dataUrl = reader.result;
-        console.log('Raw image size:', Math.round(dataUrl.length / 1024) + 'KB');
-        // If small enough, use directly
-        if (dataUrl.length < 800000) {
-          resolve(dataUrl);
-          return;
-        }
-        // Too large — compress via canvas
-        var img = new window.Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = function() {
-          var canvas = document.createElement('canvas');
-          var w = Math.min(img.width, 500);
-          var h = Math.round(img.height * (w / img.width));
-          canvas.width = w;
-          canvas.height = h;
-          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-          var compressed = canvas.toDataURL('image/jpeg', 0.4);
-          console.log('Compressed to:', Math.round(compressed.length / 1024) + 'KB');
-          resolve(compressed);
-        };
-        img.onerror = function() {
-          // Canvas failed — just use raw (may fail on Firestore size limit)
-          console.warn('Canvas compression failed, using raw');
-          resolve(dataUrl);
-        };
-        img.src = dataUrl;
-      };
-      reader.onerror = () => reject(new Error('Could not read file'));
+    // Fallback: store image as data URL directly in Firestore (no Storage needed)
+    var reader = new FileReader();
+    var result = await new Promise(function(ok, fail) {
+      reader.onloadend = function() { ok(reader.result); };
+      reader.onerror = function() { fail(new Error('File read failed')); };
       reader.readAsDataURL(file);
     });
+    console.log('Image data URL size:', Math.round(result.length / 1024) + 'KB');
+    return result;
   }
 
   // ---- Import from Config ----
