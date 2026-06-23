@@ -1130,6 +1130,13 @@ select.form-control {
   padding: 6px 12px;
   border-radius: 10px;
 }
+/* Virginia Dept of Health Professions - dark text on white, wide 2-line logo */
+.footer-credentials img[alt*="Virginia"] {
+  height: 46px;
+  background: #fff;
+  padding: 7px 14px;
+  border-radius: 10px;
+}
 .footer-bottom {
   padding: 1.75rem 0;
   display: flex;
