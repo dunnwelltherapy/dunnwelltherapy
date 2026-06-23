@@ -152,10 +152,14 @@
       document.getElementById('stat-services').textContent = servSnap.size;
       document.getElementById('stat-patients').textContent = patientsSnap.size;
 
-      // Count images
+      // Count images (Firebase Storage if available, plus the Firestore image library)
       try {
-        const listResult = await storage.ref('images').listAll();
-        document.getElementById('stat-images').textContent = listResult.items.length;
+        var imgCount = 0;
+        if (storage) {
+          try { imgCount += (await storage.ref('images').listAll()).items.length; } catch (e) {}
+        }
+        try { imgCount += (await db.collection('imageLibrary').get()).size; } catch (e) {}
+        document.getElementById('stat-images').textContent = imgCount;
       } catch (e) {
         document.getElementById('stat-images').textContent = '0';
       }
@@ -994,36 +998,72 @@
     const grid = document.getElementById('image-library-grid');
     grid.innerHTML = '<div class="admin-loading"><div class="admin-spinner"></div></div>';
 
-    try {
-      const listResult = await storage.ref('images').listAll();
-      if (listResult.items.length === 0) {
-        grid.innerHTML = '<div class="empty-state"><i class="fas fa-images"></i><h4>No images uploaded</h4><p>Upload images to use in blog posts and your site.</p></div>';
-        return;
+    var items = [];
+    // Firebase Storage (Blaze plan) — list if available
+    if (storage) {
+      try {
+        const listResult = await storage.ref('images').listAll();
+        for (const item of listResult.items) {
+          var surl = await item.getDownloadURL();
+          items.push({ url: surl, name: item.name, ref: 'storage:' + item.fullPath });
+        }
+      } catch (e) {
+        console.warn('Storage list unavailable, using Firestore image library:', e.message);
       }
-
-      grid.innerHTML = '';
-      for (const item of listResult.items) {
-        const url = await item.getDownloadURL();
-        const div = document.createElement('div');
-        div.className = 'image-grid-item';
-        div.innerHTML = `
-          <img src="${url}" alt="${escapeHtml(item.name)}" loading="lazy">
-          <div class="image-overlay">
-            <button class="copy-url" title="Copy URL" onclick="adminPanel.copyImageUrl('${url}')"><i class="fas fa-link"></i></button>
-            <button class="delete-image" title="Delete" onclick="adminPanel.deleteImage('${item.fullPath}')"><i class="fas fa-trash"></i></button>
-          </div>`;
-        grid.appendChild(div);
-      }
-    } catch (e) {
-      grid.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><h4>Error loading images</h4><p>' + escapeHtml(e.message) + '</p></div>';
     }
+    // Firestore image library (works on the free Spark plan, no Storage needed)
+    try {
+      const libSnap = await db.collection('imageLibrary').orderBy('createdAt', 'desc').get();
+      libSnap.forEach(function (doc) {
+        var d = doc.data();
+        items.push({ url: d.dataUrl, name: d.name || 'image', ref: 'firestore:' + doc.id });
+      });
+    } catch (e) {
+      console.warn('Firestore image library load failed:', e.message);
+    }
+
+    if (items.length === 0) {
+      grid.innerHTML = '<div class="empty-state"><i class="fas fa-images"></i><h4>No images uploaded</h4><p>Upload images to use in blog posts and your site.</p></div>';
+      return;
+    }
+
+    grid.innerHTML = '';
+    items.forEach(function (it) {
+      var div = document.createElement('div');
+      div.className = 'image-grid-item';
+      div.innerHTML =
+        '<img src="' + it.url + '" alt="' + escapeHtml(it.name) + '" loading="lazy">' +
+        '<div class="image-overlay">' +
+          '<button class="copy-url" title="Copy URL" onclick="adminPanel.copyImageUrl(this.closest(\'.image-grid-item\').querySelector(\'img\').src)"><i class="fas fa-link"></i></button>' +
+          '<button class="delete-image" title="Delete" onclick="adminPanel.deleteImage(\'' + it.ref + '\')"><i class="fas fa-trash"></i></button>' +
+        '</div>';
+      grid.appendChild(div);
+    });
   }
 
   async function uploadLibraryImage(file) {
-    const filename = Date.now() + '-' + file.name.replace(/[^a-zA-Z0-9._-]/g, '');
-    const ref = storage.ref('images/' + filename);
-    const snap = await ref.put(file);
-    return await snap.ref.getDownloadURL();
+    var safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '');
+    // Try Firebase Storage first (Blaze plan); fall back to a compressed data URL
+    // stored in the Firestore "imageLibrary" collection (works on the free Spark plan).
+    if (storage) {
+      try {
+        var ref = storage.ref('images/' + Date.now() + '-' + safeName);
+        var snap = await ref.put(file);
+        return await snap.ref.getDownloadURL();
+      } catch (e) {
+        console.warn('Storage library upload failed, storing in Firestore:', e.message);
+      }
+    }
+    var dataUrl = await compressImageToDataUrl(file, 1600, 0.82);
+    if (dataUrl.length > 1000 * 1024) {
+      throw new Error('Image is too large to store without Firebase Storage. Try a smaller image.');
+    }
+    await db.collection('imageLibrary').add({
+      name: safeName,
+      dataUrl: dataUrl,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    return dataUrl;
   }
 
   function copyImageUrl(url) {
@@ -1032,10 +1072,15 @@
     });
   }
 
-  function deleteImage(path) {
+  function deleteImage(ref) {
     pendingDeleteFn = async () => {
       try {
-        await storage.ref(path).delete();
+        if (ref.indexOf('firestore:') === 0) {
+          await db.collection('imageLibrary').doc(ref.slice(10)).delete();
+        } else {
+          var path = ref.indexOf('storage:') === 0 ? ref.slice(8) : ref;
+          await storage.ref(path).delete();
+        }
         showToast('Image deleted.', 'success');
         loadImages();
         loadDashboard();
@@ -1044,6 +1089,45 @@
       }
     };
     showModal('confirm-modal');
+  }
+
+  // ---- Image compression (keeps base64 fallbacks under Firestore's 1MB doc limit) ----
+  function compressImageToDataUrl(file, maxDim, quality) {
+    maxDim = maxDim || 1600;
+    quality = quality || 0.82;
+    return new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+      reader.onerror = function () { reject(new Error('File read failed')); };
+      reader.onload = function () {
+        // Animated GIFs would lose animation if drawn to canvas — keep as-is.
+        if (file.type === 'image/gif') { resolve(reader.result); return; }
+        var img = new Image();
+        img.onerror = function () { resolve(reader.result); }; // fall back to raw on decode error
+        img.onload = function () {
+          var w = img.naturalWidth || img.width;
+          var h = img.naturalHeight || img.height;
+          var scale = Math.min(1, maxDim / Math.max(w, h));
+          var cw = Math.max(1, Math.round(w * scale));
+          var ch = Math.max(1, Math.round(h * scale));
+          var canvas = document.createElement('canvas');
+          canvas.width = cw; canvas.height = ch;
+          var ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#ffffff';        // flatten transparency for JPEG output
+          ctx.fillRect(0, 0, cw, ch);
+          ctx.drawImage(img, 0, 0, cw, ch);
+          var q = quality;
+          var out = canvas.toDataURL('image/jpeg', q);
+          // Step quality down until it fits comfortably inside a Firestore document.
+          while (out.length > 900 * 1024 && q > 0.4) {
+            q -= 0.12;
+            out = canvas.toDataURL('image/jpeg', q);
+          }
+          resolve(out);
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
   }
 
   // ---- Image Upload Helper ----
@@ -1070,13 +1154,11 @@
       }
     }
 
-    // Fallback: store image as data URL directly in Firestore (no Storage needed)
-    var reader = new FileReader();
-    var result = await new Promise(function(ok, fail) {
-      reader.onloadend = function() { ok(reader.result); };
-      reader.onerror = function() { fail(new Error('File read failed')); };
-      reader.readAsDataURL(file);
-    });
+    // Fallback: compress + store as a data URL directly in Firestore (no Storage needed)
+    var result = await compressImageToDataUrl(file, 1600, 0.82);
+    if (result.length > 1000 * 1024) {
+      throw new Error('Image is too large to store without Firebase Storage. Try a smaller image (under ~2MB) or enable Storage.');
+    }
     console.log('Image data URL size:', Math.round(result.length / 1024) + 'KB');
     return result;
   }
