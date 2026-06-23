@@ -23,7 +23,15 @@ Professional website for **DunnWell Therapy, LLC**, an occupational therapy prac
 - `js/admin.js`: added `compressImageToDataUrl()` (canvas resize ≤1600px + adaptive JPEG quality) used by every base64 fallback so images stay under Firestore's 1MB doc limit.
 - Image Library now has a no-Storage fallback: uploads/browse/delete backed by the `imageLibrary` Firestore collection. Dashboard image count counts both Storage + Firestore.
 - Added `firestore.rules` (+ wired into `firebase.json`, `.firebaserc`) and **deployed** — public read on content, admin-only on PHI.
-- ⚠️ Manual check: log into the admin and upload one image to confirm the pipeline end-to-end (can't be tested headlessly). Video testimonials still use the "Add by URL" method (too large for base64).
+- Owner-confirmed: admin image upload + content editing work end-to-end (✅ 2026-06-23). Video testimonials still use the "Add by URL" method (too large for base64).
+
+**Footer:**
+- Added the **Virginia Department of Health Professions** credential badge (`virginia-dhp.webp`, white-card style) to all 6 pages — order is AOTA · Virginia · DC · Florida · Texas.
+
+**Verification (adversarial, against live prod):**
+- All 6 pages + admin return 200; cache headers, video `preload="none"`, WebP content-types, robots/sitemap/favicons, per-page OG/Twitter + JSON-LD all confirmed live.
+- Unauthenticated Firestore probe proved `patients` + `clinicalNotes` return **403 PERMISSION_DENIED** while `blogPosts`/`services`/`testimonials` return 200 — PHI is protected in production.
+- `storage.rules` not deployed: Firebase Storage is not enabled on the project (Spark plan); the Firestore base64 fallback covers uploads.
 
 ---
 

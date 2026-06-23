@@ -632,19 +632,25 @@ All images are in the `images/` folder:
 
 | Image File | What It Is | Where It Shows Up |
 |---|---|---|
-| `logo-full.png` | Main logo with tagline | Nav bar and footer on every page |
+| `logo-full.webp` | Main logo with tagline | Nav bar and footer on every page (a `.png` copy is kept for search engines) |
 | `logo-no-tagline.png` | Logo without tagline | Backup — not currently used |
 | `logo-text-only.png` | Text-only logo | Backup — not currently used |
 | `logo-icon.png` | Lotus icon only | Backup — not currently used |
-| `bianca-dunn.png` | Bianca's headshot | Homepage and About page |
-| `children-playing.png` | Kids running outdoors | Homepage "Who We Help" section |
+| `bianca-dunn.webp` | Bianca's headshot | Homepage and About page |
+| `children-playing.webp` | Kids running outdoors | Homepage "Who We Help" section |
 | `parents-kids.png` | Parents and kids with toys | Services page "What Parents Can Expect" |
-| `aota.png` | AOTA credential badge | Footer on every page |
-| `dc-health.png` | DC Health badge | Footer on every page |
-| `florida-health.png` | Florida Health badge | Footer on every page |
-| `texas-hhs.png` | Texas HHS badge | Footer on every page |
+| `aota.webp` | AOTA credential badge | Footer on every page |
+| `virginia-dhp.webp` | Virginia Dept of Health Professions badge | Footer on every page |
+| `dc-health.webp` | DC Health badge | Footer on every page |
+| `florida-health.webp` | Florida Health badge | Footer on every page |
+| `texas-hhs.webp` | Texas HHS badge | Footer on every page |
+| `og-card.png` | Social share preview card (1200×630) | Shown when the site link is shared on Facebook / X / texts |
+| `favicon.ico`, `favicon-32.png`, `apple-touch-icon.png` | Tab & bookmark icons | Browser tab and phone home-screen icon |
+| `poster.jpg`, `poster-2.jpg`, `poster-3.jpg` | Video thumbnails | Still image shown before each testimonial video plays |
 | `testimonial-video.mp4` | Video testimonial #1 | Homepage testimonials |
 | `testimonial-video-2.mp4` | Video testimonial #2 | Homepage testimonials |
+
+> **Note on `.webp`:** Most photos and badges are now in **WebP** format — a modern image type that looks identical but is far smaller (e.g. the Florida badge went from 167 KB to 27 KB), which makes pages load faster. You can still upload regular JPG/PNG images in the admin; the site handles them automatically.
 
 ### To replace an image:
 Name the new file **exactly the same** as the old one, put it in the `images/` folder (replacing the old file), and deploy (Section 16).
@@ -918,7 +924,30 @@ Add `sudo` before the command (e.g., `sudo npm install -g vercel`). Type your Ma
 
 ---
 
-*Last updated: April 28, 2026 — Blog image upload fix, featured image display on blog cards*
+*Last updated: June 23, 2026 — Performance/SEO overhaul, reliable image uploads, Firestore security rules, Virginia DHP footer badge*
+
+### Recent Updates (June 23, 2026)
+
+**Speed & search-engine improvements (live)**
+- Homepage videos no longer auto-download (~50 MB saved on first visit); they show a thumbnail and load only when played
+- Photos and badges converted to WebP (much smaller, look identical) and the browser now caches them, so repeat visits are faster
+- Added a sitemap, robots file, favicons, a 1200×630 social share card, and proper page descriptions so Google and social previews look correct
+- The admin page is now hidden from search engines (`noindex`)
+
+**Image uploads now work reliably on the free plan**
+- Every uploaded image (blog, headshot, hero background, and the Image Library) is automatically **resized and compressed** before being stored, so it always fits the database's size limit — large photos no longer fail
+- The Image Library works without Firebase Storage by saving images to the database; if you ever upgrade to the paid Blaze plan, it uses Storage automatically
+- Videos are still added by URL (they're too large to store this way)
+
+**Patient data is now protected (Firestore security rules)**
+- Public website content (services, blog, testimonials) can be read by anyone, but only a logged-in admin can change it
+- The **Patients** and **Clinical Notes** sections are locked to logged-in admins only — they can never be read by the public. This was verified live.
+- Rules live in `firestore.rules`; redeploy them with `firebase deploy --only firestore:rules`
+
+**Footer**
+- Added the **Virginia Department of Health Professions** badge to the credential row on every page (now: AOTA · Virginia · DC · Florida · Texas)
+
+---
 
 ### Recent Updates (April 2026)
 
@@ -931,4 +960,5 @@ Add `sudo` before the command (e.g., `sudo npm install -g vercel`). Type your Ma
 **Blog Cards Show Featured Images**
 - Blog posts on the blog page and homepage now display the featured image you uploaded
 - If no image is set, it shows the default newspaper icon placeholder
+
 *Created by Willie Austin with Claude Code*
