@@ -18,21 +18,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     await window._dunnwellFirebase.loadFirebaseContent();
   }
 
-  // Build category filter buttons dynamically from blog data
-  buildCategoryFilters();
+  try {
+    // Build category filter buttons dynamically from blog data
+    buildCategoryFilters();
 
-  // Check if we're viewing a single post
-  const params = new URLSearchParams(window.location.search);
-  const postId = params.get('post');
+    // Check if we're viewing a single post
+    const params = new URLSearchParams(window.location.search);
+    const postId = params.get('post');
 
-  if (postId) {
-    showSinglePost(postId);
-  } else {
-    renderBlogList();
+    if (postId) {
+      showSinglePost(postId);
+    } else {
+      renderBlogList();
+    }
+
+    initCategoryFilters();
+    initBackButton();
+  } catch (e) {
+    console.error('[blog] render failed:', e);
   }
-
-  initCategoryFilters();
-  initBackButton();
 });
 
 /* ----------------------------------------------------------

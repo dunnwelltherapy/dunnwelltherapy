@@ -49,7 +49,10 @@ async function loadFirebaseContent() {
       db.collection('testimonials').orderBy('order', 'asc').get(),
       db.collection('settings').doc('about').get(),
       db.collection('settings').doc('homepage').get(),
-      db.collection('settings').doc('servicesPage').get()
+      db.collection('settings').doc('servicesPage').get(),
+      db.collection('settings').doc('theme').get(),
+      db.collection('videoTestimonials').get(),
+      db.collection('settings').doc('siteContent').get()
     ]);
     const [
       settingsSnap,
@@ -58,7 +61,10 @@ async function loadFirebaseContent() {
       testimonialsSnap,
       aboutSnap,
       homepageSnap,
-      servicesPageSnap
+      servicesPageSnap,
+      themeSnap,
+      videoSnap,
+      contentSnap
     ] = await Promise.race([load, timeout]);
 
     // Merge settings
@@ -126,9 +132,8 @@ async function loadFirebaseContent() {
       });
     }
 
-    // Load & apply theme colors
+    // Apply theme colors (fetched in the batch above)
     try {
-      const themeSnap = await db.collection('settings').doc('theme').get();
       if (themeSnap.exists) {
         const t = themeSnap.data();
         const root = document.documentElement;
@@ -224,9 +229,8 @@ async function loadFirebaseContent() {
       console.warn('Theme load skipped:', e.message);
     }
 
-    // Load video testimonials
+    // Video testimonials (fetched in the batch above)
     try {
-      const videoSnap = await db.collection('videoTestimonials').get();
       if (!videoSnap.empty) {
         const videos = [];
         videoSnap.forEach(doc => videos.push(doc.data()));
@@ -237,9 +241,8 @@ async function loadFirebaseContent() {
       console.warn('Video testimonials load failed:', e.message);
     }
 
-    // Load & apply siteContent (data-edit attributes)
+    // Apply siteContent / data-edit (fetched in the batch above)
     try {
-      const contentSnap = await db.collection('settings').doc('siteContent').get();
       if (contentSnap.exists) {
         const content = contentSnap.data();
         document.querySelectorAll('[data-edit]').forEach(function (el) {

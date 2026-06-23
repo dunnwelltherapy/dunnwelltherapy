@@ -8,7 +8,21 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="canonical" href="https://dunnwelltherapy.com/contact.html">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <meta name="theme-color" content="#6B2D5B">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="DunnWell Therapy">
+  <meta property="og:title" content="Contact | DunnWell Therapy">
+  <meta property="og:description" content="Contact DunnWell Therapy with questions, scheduling, or to learn about our OT services.">
+  <meta property="og:url" content="https://dunnwelltherapy.com/contact.html">
+  <meta property="og:image" content="https://dunnwelltherapy.com/images/bianca-dunn.webp">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://dunnwelltherapy.com/images/bianca-dunn.webp">
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"></noscript>
   <link rel="stylesheet" href="css/styles.css">
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
@@ -55,25 +69,25 @@
           <p style="color: var(--text-muted); margin-bottom: 2rem;" data-edit="contactForm.subtitle">Fill out the form below and we'll respond within 24 business hours.</p>
           <form id="contact-form">
             <div class="form-row">
-              <div class="form-group"><label>First Name <span class="required">*</span></label><input type="text" class="form-control" name="firstName" required placeholder="First name"></div>
-              <div class="form-group"><label>Last Name <span class="required">*</span></label><input type="text" class="form-control" name="lastName" required placeholder="Last name"></div>
+              <div class="form-group"><label for="firstName">First Name <span class="required">*</span></label><input type="text" class="form-control" name="firstName" required placeholder="First name" id="firstName"></div>
+              <div class="form-group"><label for="lastName">Last Name <span class="required">*</span></label><input type="text" class="form-control" name="lastName" required placeholder="Last name" id="lastName"></div>
             </div>
             <div class="form-row">
-              <div class="form-group"><label>Email <span class="required">*</span></label><input type="email" class="form-control" name="email" required placeholder="your@email.com"></div>
-              <div class="form-group"><label>Phone</label><input type="tel" class="form-control" name="phone" placeholder="(786) 479-3593"></div>
+              <div class="form-group"><label for="email">Email <span class="required">*</span></label><input type="email" class="form-control" name="email" required placeholder="your@email.com" id="email"></div>
+              <div class="form-group"><label for="phone">Phone</label><input type="tel" class="form-control" name="phone" placeholder="(786) 479-3593" id="phone"></div>
             </div>
             <div class="form-row">
-              <div class="form-group"><label>Child / Client Age</label><input type="text" class="form-control" name="clientAge" placeholder="e.g., 5 years old"></div>
+              <div class="form-group"><label for="clientAge">Child / Client Age</label><input type="text" class="form-control" name="clientAge" placeholder="e.g., 5 years old" id="clientAge"></div>
               <div class="form-group">
-                <label>Service of Interest</label>
+                <label for="service-interest-select">Service of Interest</label>
                 <select class="form-control" name="serviceInterest" id="service-interest-select">
                   <option value="">Select a service...</option>
                 </select>
               </div>
             </div>
             <div class="form-row">
-              <div class="form-group"><label>State</label>
-                <select class="form-control" name="state">
+              <div class="form-group"><label for="state">State</label>
+                <select class="form-control" name="state" id="state">
                   <option value="">Select your state...</option>
                   <option value="Virginia">Virginia</option>
                   <option value="Washington, DC">Washington, DC</option>
@@ -82,11 +96,11 @@
                   <option value="Other">Other</option>
                 </select>
               </div>
-              <div class="form-group"><label>City</label><input type="text" class="form-control" name="city" placeholder="Your city"></div>
+              <div class="form-group"><label for="city">City</label><input type="text" class="form-control" name="city" placeholder="Your city" id="city"></div>
             </div>
             <div class="form-group">
-              <label>Brief Message / Goals <span class="required">*</span></label>
-              <textarea class="form-control" name="message" rows="5" required placeholder="Tell us a bit about your child and what you're looking for..."></textarea>
+              <label for="message">Brief Message / Goals <span class="required">*</span></label>
+              <textarea class="form-control" name="message" rows="5" required placeholder="Tell us a bit about your child and what you're looking for..." id="message"></textarea>
             </div>
             <button type="submit" class="btn btn-primary btn-lg" id="contact-submit-btn"><i class="fas fa-paper-plane"></i> Send Message</button>
           </form>
@@ -110,7 +124,7 @@
 
   <!-- Map -->
   <section class="map-section">
-    <iframe id="contact-map" src="" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Office location"></iframe>
+    <iframe id="contact-map" src="about:blank" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Office location"></iframe>
   </section>
 
   <footer class="footer">

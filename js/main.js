@@ -8,25 +8,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     await window._dunnwellFirebase.loadFirebaseContent();
   }
 
-  initAnnouncementBar();
-  initNavigation();
-  initScrollEffects();
-  initBackToTop();
-  renderFooter();
-  renderAboutPreview();
-  renderDifferentiators();
-  renderWhoWeHelp();
-  renderApproach();
-  renderParentExpect();
-  renderServicesPreview();
-  renderServicesFull();
-  renderTestimonials();
-  renderBlogPreview();
-  renderAboutFull();
-  renderContactPage();
-  renderServiceLocations();
-  renderServicesPaymentNote();
-  populateBookingDropdowns();
+  // Run each independently so one bad data shape can't blank the whole page
+  [
+    initAnnouncementBar, initNavigation, initScrollEffects, initBackToTop,
+    renderFooter, renderAboutPreview, renderDifferentiators, renderWhoWeHelp,
+    renderApproach, renderParentExpect, renderServicesPreview, renderServicesFull,
+    renderTestimonials, renderBlogPreview, renderAboutFull, renderContactPage,
+    renderServiceLocations, renderServicesPaymentNote, populateBookingDropdowns
+  ].forEach(fn => { try { fn(); } catch (e) { console.error('[render]', fn.name, e); } });
 });
 
 /* ----------------------------------------------------------
@@ -228,7 +217,8 @@ function renderAboutFull() {
   if (!nameEl) return;
 
   nameEl.textContent = `${C.name}, ${C.credentials}`;
-  document.getElementById('about-credentials-full').textContent = C.title;
+  const credFullEl = document.getElementById('about-credentials-full');
+  if (credFullEl) credFullEl.textContent = C.title;
 
   // Build full bio from all sections
   const bioEl = document.getElementById('about-bio-full');
@@ -248,10 +238,10 @@ function renderAboutFull() {
   if (paymentEl) paymentEl.textContent = C.paymentNote;
 
   const eduEl = document.getElementById('about-education');
-  if (eduEl) eduEl.innerHTML = C.education.map(e => `<li>${e}</li>`).join('');
+  if (eduEl) eduEl.innerHTML = (Array.isArray(C.education) ? C.education : []).map(e => `<li>${e}</li>`).join('');
 
   const certEl = document.getElementById('about-certifications');
-  if (certEl) certEl.innerHTML = C.certifications.map(c => `<li>${c}</li>`).join('');
+  if (certEl) certEl.innerHTML = (Array.isArray(C.certifications) ? C.certifications : []).map(c => `<li>${c}</li>`).join('');
 }
 
 /* ----------------------------------------------------------
@@ -359,9 +349,9 @@ function renderTestimonials() {
   const videoContainer = document.getElementById('video-testimonials-container');
   if (videoContainer) {
     const hardcodedVideos = [
-      { url: 'images/testimonial-video.mp4' },
-      { url: 'images/testimonial-video-2.mp4' },
-      { url: 'images/testimonial-video-3.mp4' }
+      { url: 'images/testimonial-video.mp4', poster: 'images/poster.jpg' },
+      { url: 'images/testimonial-video-2.mp4', poster: 'images/poster-2.jpg' },
+      { url: 'images/testimonial-video-3.mp4', poster: 'images/poster-3.jpg' }
     ];
     const firestoreVideos = (SITE_CONFIG.videoTestimonials || []).filter(v =>
       v.url && !v.url.includes('testimonial-video.mp4') && !v.url.includes('testimonial-video-2.mp4') && !v.url.includes('testimonial-video-3.mp4')
@@ -371,7 +361,7 @@ function renderTestimonials() {
     videoContainer.style.gridTemplateColumns = cols;
     videoContainer.innerHTML = allVideos.map(v => `
       <div class="video-testimonial">
-        <video controls preload="auto" playsinline>
+        <video controls preload="none" playsinline${v.poster ? ` poster="${v.poster}"` : ''}>
           <source src="${v.url}#t=0.1" type="video/mp4">
         </video>
       </div>

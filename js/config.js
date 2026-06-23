@@ -307,7 +307,7 @@ const SITE_CONFIG = {
   about: {
     name: "Bianca Dunn",
     credentials: "MSOT, OTR/L",
-    photo: "images/bianca-dunn.png",
+    photo: "images/bianca-dunn.webp",
     title: "Founder & Licensed Occupational Therapist",
     bio: `DunnWell Therapy was founded by Bianca Dunn, MSOT, OTR/L, a licensed occupational therapist with over eight years of experience delivering comprehensive, client-centered care across medical, educational, and community-based settings. Bianca earned both her undergraduate and graduate degrees in Occupational Therapy from the prestigious Florida Agricultural and Mechanical University (Florida A&M University), where she built a strong foundation in culturally responsive care, health equity, and community-centered practice.`,
     bioExtended: `Bianca has worked extensively within hospital systems, providing both inpatient and outpatient occupational therapy services, as well as across school-based programs, early intervention, and in-home therapy models. Her diverse clinical background gives her the unique ability to bridge medical expertise with functional, real-world application, meeting clients and families exactly where they are and tailoring every intervention to their daily environments and lived experiences.
