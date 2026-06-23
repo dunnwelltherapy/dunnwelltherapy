@@ -8,13 +8,33 @@ Professional website for **DunnWell Therapy, LLC**, an occupational therapy prac
 
 ---
 
+## 2026-06-23 — Performance / SEO / a11y pass + backend upload reliability
+
+**Performance & SEO (live on dunnwelltherapy.com):**
+- Homepage videos `preload="none"` + poster images (the ~50MB video no longer auto-loads).
+- Hero/about images converted to WebP (`bianca-dunn.webp` −95%, `children-playing.webp` −90%); logo + 4 credential badges → WebP (`florida-health` 167KB→27KB); intrinsic `width`/`height` for CLS.
+- Vercel cache headers (`max-age=86400, stale-while-revalidate=604800`); non-render-blocking Font Awesome.
+- `robots.txt`, `sitemap.xml`, favicons, canonical, Open Graph + per-page Twitter cards, JSON-LD (MedicalBusiness + Person).
+- New 1200×630 social share card `images/og-card.png` (og:image / twitter:image on all pages).
+- `admin.html` served with `X-Robots-Tag: noindex, nofollow`.
+- Robustness: per-render-fn try/catch in `main.js`/`blog.js`, array guards, parallelized Firestore reads in `firebase-loader.js`.
+
+**Backend (admin uploads now work on the free Spark plan):**
+- `js/admin.js`: added `compressImageToDataUrl()` (canvas resize ≤1600px + adaptive JPEG quality) used by every base64 fallback so images stay under Firestore's 1MB doc limit.
+- Image Library now has a no-Storage fallback: uploads/browse/delete backed by the `imageLibrary` Firestore collection. Dashboard image count counts both Storage + Firestore.
+- Added `firestore.rules` (+ wired into `firebase.json`, `.firebaserc`) and **deployed** — public read on content, admin-only on PHI.
+- ⚠️ Manual check: log into the admin and upload one image to confirm the pipeline end-to-end (can't be tested headlessly). Video testimonials still use the "Add by URL" method (too large for base64).
+
+---
+
 ## Architecture & Tech Stack
 
 - **Static HTML/CSS/JS** (no frameworks)
 - **Firebase Spark (free tier)** backend for admin panel:
   - **Firebase Authentication** for secure admin login (email + password)
   - **Cloud Firestore** for storing all site content
-  - **Firebase Storage** for image uploads (requires Blaze plan upgrade, currently bypassed)
+  - **Firebase Storage** for image uploads (Blaze plan). On the free **Spark** plan, uploads automatically fall back to **compressed base64 stored in Firestore** (resized to ≤1600px / JPEG so each fits the 1MB doc limit); the Image Library is backed by an `imageLibrary` Firestore collection. The admin therefore works fully without Storage.
+  - **Firestore security rules** (`firestore.rules`): public READ on content collections (settings, services, blogPosts, testimonials, videoTestimonials); authenticated-only on `patients`/`clinicalNotes` (PHI) and `imageLibrary`. Deployed via `firebase deploy --only firestore:rules`.
 - **Config-driven content** via `js/config.js` (fallback when Firebase is unavailable)
 - **Quill.js** rich text editor for blog posts in admin panel
 - **EmailJS** for dual-email contact form delivery (with mailto fallback)
